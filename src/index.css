@@ -86,9 +86,9 @@ nav button {
 .typing-effect {
   display: inline-block;
   overflow: hidden; /* Ensures the content hides until it's typed */
-  border-right: 4px solid #333; /* Optional: creates a cursor-like effect */
+  border-right: 2px solid #333; /* Optional: creates a cursor-like effect */
   white-space: nowrap; /* Prevents text from wrapping to the next line */
-  animation: typing 3s steps(25) 1s forwards, step-start 0.5s step-end;
+  animation: typing 1s steps(25) 1s forwards, step-start 0.5s step-end;
 }
 
 @keyframes typing {
