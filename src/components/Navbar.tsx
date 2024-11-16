@@ -31,7 +31,7 @@ const Navbar = () => {
           <div className="flex-shrink-0">
             {/* Corrected Image Path */}
             <img
-              src="/Icon/AK.png"
+              src="/AK.jpg"
               alt="Portfolio"
               className="w-10 h-10 rounded-full"
             />
