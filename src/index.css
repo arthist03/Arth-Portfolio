@@ -59,3 +59,49 @@ nav button {
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-blue-700 dark:bg-blue-800;
 }
+
+@keyframes fadeInUp {
+  0% {
+    stroke-dashoffset: 50;
+    fill: transparent;
+  }
+  80% {
+    fill: transparent;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    fill: #FFA500;
+  }
+}
+
+.text path {
+  fill: transparent;
+  stroke: #f7a0a0;
+  stroke-width: 0.2;
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: fadeInUp 2s ease-in-out 1 forwards;
+}
+
+.typing-effect {
+  display: inline-block;
+  overflow: hidden; /* Ensures the content hides until it's typed */
+  border-right: 4px solid #333; /* Optional: creates a cursor-like effect */
+  white-space: nowrap; /* Prevents text from wrapping to the next line */
+  animation: typing 3s steps(25) 1s forwards, step-start 0.5s step-end;
+}
+
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 60%;
+  }
+}
+
+@keyframes blink {
+  30% {
+    border-color: transparent;
+  }
+}
