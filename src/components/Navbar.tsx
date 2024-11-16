@@ -30,7 +30,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0">
             <span className="text-xl font-bold">
-              <img src="/Icon/ArthKadiya.svg" alt="Portfolio" className="w-10 h-10 rounded-full" />
+            <link rel="icon" type="image/jpeg" href="https://github.com/arthist03/Arth-Portfolio/blob/0aab437bf2e87b49bd117c131763def5848760c8/Icon/AK.jpg" />
             </span>
           </div>
           <div className="hidden md:flex items-center space-x-8">
