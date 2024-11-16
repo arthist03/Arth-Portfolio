@@ -30,7 +30,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0">
             <span className="text-xl font-bold">
-              <img src="https://github.com/arthist03/Arth-Portfolio/blob/cb70ae230394b9f93d3d8cf28070bd2104d5b971/Icon/AK.png" alt="Portfolio" className="w-8 h-8 rounded-full" />
+              <img src="Icon\AK.jpg" alt="Portfolio" className="w-8 h-8 rounded-full" />
             </span>
           </div>
           <div className="hidden md:flex items-center space-x-8">
