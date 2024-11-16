@@ -65,7 +65,7 @@ nav button {
     stroke-dashoffset: 50;
     fill: transparent;
   }
-  80% {
+  90% {
     fill: transparent;
   }
   100% {
@@ -77,7 +77,7 @@ nav button {
 .text path {
   fill: transparent;
   stroke: #f7a0a0;
-  stroke-width: 0.2;
+  stroke-width: 0.3;
   stroke-dasharray: 50;
   stroke-dashoffset: 50;
   animation: fadeInUp 2s ease-in-out 1 forwards;
