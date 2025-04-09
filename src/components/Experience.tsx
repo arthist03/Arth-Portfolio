@@ -18,6 +18,14 @@ const Experience = () => {
 
   const experiences: ExperienceItem[] = [
     {
+      title: 'Intern – Computer Vision Engineer',
+      company: 'Sudhir Srivastava Innovations Pvt. Ltd.',
+      period: 'March 2025 - Present',
+      description: 'Developing an AI/ML Algorithm for Medical Robotics',
+      technologies: ['Python', 'Torch', 'Unity', 'Vuforia'],
+      image: 'https://picknik.ai/assets/images/our-clients/SSInnovations.png',
+    },
+    {
       title: 'FULL STACK DEVELOPER',
       company: 'IEEE BOMBAY',
       period: 'September 2023 - October 2023',
