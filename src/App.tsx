@@ -8,6 +8,7 @@ import Navbar from "./components/Navbar";
 import CursorEffect from "./components/CursorEffect";
 import { ThemeProvider } from "./components/ThemeContext";
 import { Brain, Cpu, Network, Zap, Database } from "lucide-react";
+import ArthPP from '/Icon/pp.png'
 
 function App() {
   const { scrollYProgress } = useScroll();
@@ -111,21 +112,17 @@ function App() {
             >
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-gray-600 via-slate-600 to-blue-gray-700 animate-spin-slow"></div>
               <div className="absolute inset-1 rounded-full bg-slate-50 dark:bg-slate-900"></div>
-              <div className="relative w-32 h-32">
-  <a
-    href="Icon/pp.png"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="block w-full h-full"
-  >
-    <img
-      src="Icon/pp.png"
-      alt="Arth Kadiya"
-      className="absolute inset-2 w-28 h-28 rounded-full object-cover shadow-2xl transition-transform hover:scale-105"
-    />
-  </a>
-</div>
-
+              <a
+                href="Icon/pp.png"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src={ArthPP}
+                  alt="Arth Kadiya"
+                  className="absolute inset-2 w-28 h-28 rounded-full object-cover shadow-2xl"
+                />
+              </a>
 
               {/* Professional AI/ML icons */}
               <motion.div
@@ -165,7 +162,7 @@ function App() {
               className="space-y-4"
             >
               <p className="text-2xl md:text-3xl text-slate-600 dark:text-slate-300 typing-effect font-light">
-                AI/ML Engineer & Biomedical Innovator
+                AI/ML Engineer & Biomedical Engineer
               </p>
               <div className="flex justify-center space-x-6 text-sm text-slate-500 dark:text-slate-400">
                 <span className="flex items-center space-x-2">
@@ -236,7 +233,7 @@ function App() {
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed mb-8">
               I'm Arth Kadiya, a passionate AI/ML Engineer and Biomedical
-              Innovator dedicated to bridging the gap between artificial
+              Engineer dedicated to bridging the gap between artificial
               intelligence and healthcare. With expertise in neural networks,
               computer vision, and medical technology, I create intelligent
               solutions that enhance patient care and advance medical research.
@@ -331,7 +328,7 @@ const projects = [
       "Developed an advanced machine learning system using ensemble methods to predict preterm pregnancy risk. Implemented feature engineering on maternal health data and achieved 94% accuracy using Random Forest and SVM models.",
     image:
       "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=500&h=300&fit=crop",
-    tags: ["Python", "Scikit-learn", "Random Forest", "SVM", "Medical AI"],
+    tags: ["Python", "Scikit-learn", "Random Forest", "SVM"],
     link: "#",
   },
   {
@@ -357,18 +354,18 @@ const projects = [
     description:
       "Created an intelligent mobile application for ophthalmology workflow optimization. Integrated machine learning models for automated diagnosis assistance and patient data management.",
     image:
-      "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?w=500&h=300&fit=crop",
+      "https://plus.unsplash.com/premium_photo-1722653260560-f96ad79df08b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fG9waHRoYWxtb3xlbnwwfHwwfHx8MA%3D%3D",
     tags: ["Kotlin", "Firebase", "TensorFlow Lite", "Medical AI"],
     link: "https://github.com/arthist03/Eye-Care-For-You",
   },
   {
-    title: "Neural Network Playground",
+    title: "Magic ML",
     description:
-      "Interactive web application for visualizing neural network architectures and training processes. Built with React and D3.js for educational purposes in AI/ML learning.",
+      "Interactive web application for visualizing data and training processes. Built with python for educational purposes in AI/ML learning.",
     image:
-      "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=500&h=300&fit=crop",
-    tags: ["React", "D3.js", "Neural Networks", "Visualization"],
-    link: "https://github.com/arthist03",
+      "https://images.unsplash.com/photo-1672922310200-fff31138251e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjZ8fE1MfGVufDB8fDB8fHww&fit=crop",
+    tags: ["Python", "Machine Learning", "EDA", "Visualization"],
+    link: "https://github.com/arthist03/Magic-ML  ",
   },
   {
     title: "More AI/ML Projects",

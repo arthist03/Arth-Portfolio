@@ -18,10 +18,10 @@ const Experience = () => {
 
   const experiences: ExperienceItem[] = [
     {
-      title: 'Intern – Computer Vision Engineer',
+      title: 'Intern - AI/ML Engineer',
       company: 'Sudhir Srivastava Innovations Pvt. Ltd.',
-      period: 'March 2025 - Present',
-      description: 'Developing an AI/ML Algorithm for Medical Robotics',
+      period: 'March 2025 - July 2025',
+      description: 'Developed an AI/ML Algorithm for Medical Robotics',
       technologies: ['Python', 'Torch', 'Unity', 'Vuforia'],
       image: 'https://picknik.ai/assets/images/our-clients/SSInnovations.png',
     },
@@ -34,7 +34,7 @@ const Experience = () => {
       image: 'https://ieeebombay.org/wp-content/uploads/2023/02/IEEE_BS_New_Logo_with_Killa-removebg-preview.png',
     },
     {
-      title: 'BIOMEDICAL ENGINEER',
+      title: 'Intern - BIOMEDICAL ENGINEER',
       company: 'Wockhardt Hospitals Ltd, Rajkot',
       period: 'June 2023 - July 2023',
       description: 'Managed medical equipment development, leading testing, troubleshooting, and research. Provided technical support to healthcare professionals.',
@@ -42,7 +42,7 @@ const Experience = () => {
       image: 'https://th.bing.com/th/id/OIP.cjdU01fCkHQEumd_XcAyzAHaCn?w=350&h=123&c=7&r=0&o=5&dpr=1.3&pid=1.7',
     },
     {
-      title: 'BIOMEDICAL ENGINEER',
+      title: 'Intern - BIOMEDICAL ENGINEER',
       company: 'Zydus Hospitals, Ahmedabad',
       period: 'April 2022 - July 2022',
       description: 'Led testing, troubleshooting, and upkeep of medical devices, while conducting research and data analysis. Provided technical support to healthcare professionals.',
