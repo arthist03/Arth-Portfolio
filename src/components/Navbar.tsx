@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Moon, Sun, Menu, X } from "lucide-react";
 import { useTheme } from "./ThemeContext";
+import AKimage from "/Icon/AK.jpg";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -47,11 +48,18 @@ const Navbar = () => {
               className="flex items-center space-x-3"
             >
               <div className="relative">
-                <img
-                  src="https://github.com/arthist03/Arth-Portfolio/blob/9f82d1048452e53099a1f6efbcdfe5a2137ccac9/Icon/AK.jpg"
-                  alt="Arth Kadiya"
-                  className="w-10 h-10 rounded-full ring-2 ring-blue-gray-500/50 transition-all duration-300 hover:ring-blue-gray-600"
-                />
+                <a
+                  href="https://your-link-here.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src={AKimage}
+                    alt="Arth Kadiya"
+                    className="w-10 h-10 rounded-full ring-2 ring-blue-gray-500/50 transition-all duration-300 hover:ring-blue-gray-600"
+                  />
+                </a>
+
                 <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-gray-600 to-slate-700 opacity-0 hover:opacity-20 transition-opacity duration-300" />
               </div>
               <span className="font-bold text-lg bg-gradient-to-r from-blue-gray-700 via-slate-700 to-blue-gray-800 dark:from-blue-gray-200 dark:via-slate-100 dark:to-blue-gray-100 bg-clip-text text-transparent">
