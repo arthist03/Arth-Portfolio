@@ -112,7 +112,7 @@ function App() {
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-gray-600 via-slate-600 to-blue-gray-700 animate-spin-slow"></div>
               <div className="absolute inset-1 rounded-full bg-slate-50 dark:bg-slate-900"></div>
               <a
-                href="https://your-link-here.com"
+                href="Icon/pp.png"
                 target="_blank"
                 rel="noopener noreferrer"
               >
