@@ -111,17 +111,21 @@ function App() {
             >
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-gray-600 via-slate-600 to-blue-gray-700 animate-spin-slow"></div>
               <div className="absolute inset-1 rounded-full bg-slate-50 dark:bg-slate-900"></div>
-              <a
-                href="Icon/pp.png"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <img
-                  src="Icon/pp.png"
-                  alt="Arth Kadiya"
-                  className="absolute inset-2 w-28 h-28 rounded-full object-cover shadow-2xl"
-                />
-              </a>
+              <div className="relative w-32 h-32">
+  <a
+    href="Icon/pp.png"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="block w-full h-full"
+  >
+    <img
+      src="Icon/pp.png"
+      alt="Arth Kadiya"
+      className="absolute inset-2 w-28 h-28 rounded-full object-cover shadow-2xl transition-transform hover:scale-105"
+    />
+  </a>
+</div>
+
 
               {/* Professional AI/ML icons */}
               <motion.div
