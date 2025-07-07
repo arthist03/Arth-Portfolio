@@ -12,7 +12,7 @@ const Education = () => {
       degree: 'B.Tech in Biomedical Engineering',
       institution: 'Manipal Institute of Technology, Manipal, Karnataka, India',
       year: '2022-2025',
-      description: 'As a B.Tech biomedical engineering student at MIT Manipal, Karnataka, I benefit from top-tier education, cutting-edge research facilities, and strong industry connections in India’s tech hub, equipping me to make a meaningful impact in biomedical engineering.',
+      description: 'As a B.Tech biomedical engineering student at MIT Manipal, Karnataka, I benefit from top-tier education, cutting-edge research facilities, and strong industry connections in India\'s tech hub, equipping me to make a meaningful impact in biomedical engineering.',
       image: 'https://media.getmyuni.com/azure/college-image/big/manipal-institute-of-technology-mit-manipal.jpg',
       link: 'https://www.manipal.edu/mit.html',
     },
@@ -32,14 +32,14 @@ const Education = () => {
 
   return (
     <section
-      className="py-20 bg-gray-100 dark:bg-gray-800 transition-colors duration-300"
+      className="py-20 bg-slate-100 dark:bg-slate-800 transition-colors duration-300"
       id="education"
     >
       <div className="max-w-6xl mx-auto px-4">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          className="text-4xl font-bold mb-12 text-center"
+          className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-blue-gray-700 via-slate-700 to-blue-gray-800 dark:from-blue-gray-200 dark:via-slate-100 dark:to-blue-gray-100 bg-clip-text text-transparent"
         >
           Education
         </motion.h2>
@@ -64,7 +64,7 @@ const Education = () => {
                   >
                     <div
                       className={`absolute inset-0 ${
-                        theme === 'dark' ? 'bg-black/60' : 'bg-white/60'
+                        theme === 'dark' ? 'bg-slate-900/80' : 'bg-slate-50/90'
                       } backdrop-blur-sm`}
                     />
                     <img
@@ -80,42 +80,42 @@ const Education = () => {
               <div
                 className={`rounded-lg p-6 shadow-xl transition-all duration-300 ${
                   theme === 'dark'
-                    ? 'bg-gray-900/80 backdrop-blur-sm hover:bg-gray-900/90'
-                    : 'bg-white/80 backdrop-blur-sm hover:bg-white/90'
+                    ? 'bg-slate-900/90 backdrop-blur-sm hover:bg-slate-900/95 border border-slate-700'
+                    : 'bg-slate-50/90 backdrop-blur-sm hover:bg-slate-50/95 border border-slate-200'
                 }`}
               >
                 <div className="flex items-start gap-4">
                   <div
                     className={`p-3 rounded-full transition-colors ${
                       theme === 'dark'
-                        ? 'bg-blue-500/20 group-hover:bg-blue-500/30'
-                        : 'bg-blue-100 group-hover:bg-blue-200'
+                        ? 'bg-blue-gray-600/20 group-hover:bg-blue-gray-600/30'
+                        : 'bg-blue-gray-100 group-hover:bg-blue-gray-200'
                     }`}
                   >
                     <GraduationCap
                       className={`w-6 h-6 ${
-                        theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                        theme === 'dark' ? 'text-blue-gray-400' : 'text-blue-gray-600'
                       }`}
                     />
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
-                      <h3 className="text-xl font-semibold mb-2">{edu.degree}</h3>
+                      <h3 className="text-xl font-semibold mb-2 text-slate-800 dark:text-slate-100">{edu.degree}</h3>
                       <a
                         href={edu.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300 transition-colors opacity-0 group-hover:opacity-100"
+                        className="text-blue-gray-600 dark:text-blue-gray-400 hover:text-blue-gray-700 dark:hover:text-blue-gray-300 transition-colors opacity-0 group-hover:opacity-100"
                       >
                         <ExternalLink className="w-5 h-5" />
                       </a>
                     </div>
-                    <p className="text-gray-500 dark:text-gray-400 mb-2">{edu.institution}</p>
-                    <div className="flex items-center text-gray-500 dark:text-gray-400 mb-2">
+                    <p className="text-slate-600 dark:text-slate-400 mb-2">{edu.institution}</p>
+                    <div className="flex items-center text-slate-500 dark:text-slate-400 mb-2">
                       <Calendar className="w-4 h-4 mr-2" />
                       <span>{edu.year}</span>
                     </div>
-                    <p className="text-gray-700 dark:text-gray-300">{edu.description}</p>
+                    <p className="text-slate-700 dark:text-slate-300">{edu.description}</p>
                   </div>
                 </div>
               </div>

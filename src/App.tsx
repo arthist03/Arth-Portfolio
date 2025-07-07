@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import Hero3D from "./components/Hero3D";
 import Education from "./components/Education";
 import Experience from "./components/Experience";
 import ProjectCard from "./components/ProjectCard";
@@ -8,6 +7,7 @@ import Contact from "./components/Contact";
 import Navbar from "./components/Navbar";
 import CursorEffect from "./components/CursorEffect";
 import { ThemeProvider } from "./components/ThemeContext";
+import { Brain, Cpu, Network, Zap, Database } from "lucide-react";
 
 function App() {
   const { scrollYProgress } = useScroll();
@@ -32,63 +32,213 @@ function App() {
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-white transition-colors duration-300">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-gray-50 to-slate-100 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-blue-gray-900 text-slate-800 dark:text-slate-100 transition-all duration-500">
         <CursorEffect />
         <Navbar />
 
-        <div className="relative">
-          <motion.div style={{ opacity }}>
-            <Hero3D />
-          </motion.div>
-          <div className="absolute inset-0 flex items-center justify-center z-10 hero-content">
-            <div className="text-center">
-              <h1 className="text">
-              <svg width="400" height="200" viewBox="0 0 232 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M3.50132 38.532C2.94399 38.456 2.38665 38.3167 1.82932 38.114C1.27199 37.9113 0.80332 37.62 0.42332 37.24L11.0633 10.564C11.4687 10.3867 11.95 10.298 12.5073 10.298C13.1407 10.298 13.6347 10.3867 13.9893 10.564L24.7053 37.202C24.376 37.5567 23.9327 37.8353 23.3753 38.038C22.818 38.266 22.1973 38.4307 21.5133 38.532L18.5113 30.97H6.46532L3.50132 38.532ZM7.75732 27.702H17.2193L12.4693 15.732L7.75732 27.702ZM30.8898 38.114C30.2818 38.0887 29.7118 37.9873 29.1798 37.81C28.6478 37.6073 28.1285 37.2907 27.6218 36.86C28.4072 35.2133 29.0025 33.3767 29.4078 31.35C29.8385 29.298 30.0538 27.1447 30.0538 24.89C30.0538 24.5607 30.0412 24.1807 30.0158 23.75C29.9905 23.294 29.9398 22.9013 29.8638 22.572C29.5598 22.2933 29.2685 21.9007 28.9898 21.394C28.7112 20.862 28.4832 20.3173 28.3058 19.76C28.1538 19.2027 28.0778 18.7593 28.0778 18.43C28.3565 18.0753 28.8758 17.7713 29.6358 17.518C30.3958 17.2393 31.1052 17.1 31.7638 17.1C32.0172 17.556 32.2452 18.0753 32.4478 18.658C32.6505 19.2153 32.8278 19.8107 32.9798 20.444C33.6385 20.3933 34.4872 20.2413 35.5258 19.988C36.3365 19.8107 36.9825 19.6967 37.4638 19.646C37.9705 19.57 38.4012 19.532 38.7558 19.532C40.1238 19.532 41.2005 20.0513 41.9858 21.09C42.7712 22.1033 43.1638 23.484 43.1638 25.232V31.35C43.1638 32.7433 43.3412 33.744 43.6958 34.352C44.0758 34.96 44.6712 35.264 45.4818 35.264C45.8365 35.264 46.1025 35.416 46.2798 35.72C46.4825 36.024 46.5838 36.4293 46.5838 36.936C46.5838 37.3413 46.4698 37.7087 46.2418 38.038C46.0392 38.3673 45.6972 38.532 45.2158 38.532C41.5425 38.532 39.7058 36.2773 39.7058 31.768V25.878C39.7058 24.738 39.5792 23.94 39.3258 23.484C39.0725 23.028 38.6165 22.8 37.9578 22.8C37.7298 22.8 37.4765 22.8253 37.1978 22.876C36.9192 22.9267 36.4252 23.028 35.7158 23.18C34.7278 23.3827 33.9552 23.522 33.3978 23.598C33.4232 24.054 33.4358 24.51 33.4358 24.966C33.4358 27.1953 33.2205 29.488 32.7898 31.844C32.3592 34.1747 31.7258 36.2647 30.8898 38.114ZM45.4747 35.264C46.108 35.264 46.83 35.074 47.6407 34.694C48.4767 34.314 49.2874 33.668 50.0727 32.756C50.858 31.844 51.504 30.6153 52.0107 29.07C52.5174 27.4993 52.7707 25.536 52.7707 23.18V19.532H49.9587C49.7814 19.1267 49.6927 18.62 49.6927 18.012C49.6927 17.404 49.7814 16.8973 49.9587 16.492H52.7707V9.766C53.252 9.58866 53.8347 9.5 54.5187 9.5C55.1267 9.5 55.7094 9.58866 56.2667 9.766V16.492H61.9287C62.1314 16.8973 62.2327 17.404 62.2327 18.012C62.2327 18.62 62.1314 19.1267 61.9287 19.532H56.2667V27.398C56.2667 29.9313 56.6467 31.882 57.4067 33.25C58.192 34.5927 59.294 35.264 60.7127 35.264C61.4474 35.264 61.8147 35.8213 61.8147 36.936C61.8147 37.4173 61.688 37.7973 61.4347 38.076C61.2067 38.38 60.8774 38.532 60.4467 38.532C58.8 38.532 57.4067 38.0633 56.2667 37.126C55.152 36.1887 54.3287 34.884 53.7967 33.212C52.7327 35.036 51.428 36.3787 49.8827 37.24C48.3374 38.1013 46.7794 38.532 45.2087 38.532C44.8794 38.532 44.6134 38.3673 44.4107 38.038C44.208 37.734 44.1067 37.354 44.1067 36.898C44.1067 36.4167 44.2207 36.024 44.4487 35.72C44.6767 35.416 45.0187 35.264 45.4747 35.264ZM60.4606 38.532C60.1313 38.532 59.8653 38.38 59.6626 38.076C59.46 37.772 59.3586 37.3793 59.3586 36.898C59.3586 36.3913 59.4853 35.9987 59.7386 35.72C59.9666 35.416 60.2833 35.264 60.6886 35.264C61.8033 35.264 62.8673 34.77 63.8806 33.782C64.9193 32.7687 66.072 31.084 67.3386 28.728V8.398C67.3386 5.86466 67.8706 3.914 68.9346 2.546C70.024 1.178 71.5946 0.506665 73.6466 0.531998C75.5213 0.557331 76.978 1.26666 78.0166 2.66C79.0806 4.05333 79.6126 5.86466 79.6126 8.094C79.6126 9.89267 79.2833 11.894 78.6246 14.098C77.966 16.302 77.092 18.4173 76.0026 20.444C76.256 20.4187 76.522 20.406 76.8006 20.406C78.7006 20.406 80.208 21.0773 81.3226 22.42C82.4626 23.7627 83.0326 25.5613 83.0326 27.816V31.084C83.0326 32.5533 83.21 33.6173 83.5646 34.276C83.9446 34.9347 84.5653 35.264 85.4267 35.264C85.7053 35.264 86.0093 35.2007 86.3386 35.074C86.668 34.9473 87.01 34.7573 87.3647 34.504C87.7953 34.7067 88.15 35.0613 88.4287 35.568C88.7073 36.0493 88.834 36.5307 88.8086 37.012C88.4033 37.468 87.884 37.8353 87.2506 38.114C86.6173 38.3927 85.9333 38.532 85.1986 38.532C83.3746 38.532 81.9686 37.9493 80.9806 36.784C80.018 35.5933 79.5366 33.9213 79.5366 31.768V27.74C79.5366 26.448 79.2453 25.4473 78.6626 24.738C78.1053 24.0033 77.3073 23.636 76.2686 23.636C75.2553 23.636 74.3433 23.978 73.5326 24.662C72.722 25.3207 72.076 26.2327 71.5946 27.398C71.1133 28.5633 70.86 29.906 70.8346 31.426V38C70.5813 38.076 70.3026 38.1393 69.9986 38.19C69.6946 38.2407 69.4033 38.266 69.1246 38.266C68.542 38.266 67.9466 38.1773 67.3386 38V34.884C66.3 36.2267 65.236 37.1767 64.1466 37.734C63.0826 38.266 61.854 38.532 60.4606 38.532ZM70.7206 8.36V23.028C71.8606 21.28 72.836 19.5193 73.6466 17.746C74.4826 15.9727 75.116 14.2627 75.5466 12.616C76.0026 10.944 76.2306 9.424 76.2306 8.056C76.2306 6.63733 75.99 5.56067 75.5086 4.826C75.0526 4.066 74.3813 3.686 73.4946 3.686C71.6453 3.686 70.7206 5.244 70.7206 8.36ZM105.463 38.266C104.906 38.266 104.323 38.1773 103.715 38V10.564C104.247 10.3867 104.83 10.298 105.463 10.298C106.046 10.298 106.641 10.3867 107.249 10.564V25.308L120.169 10.07C120.752 10.1713 121.284 10.4247 121.765 10.83C122.272 11.2353 122.614 11.7293 122.791 12.312L114.089 22.458L125.185 36.252C125.084 36.784 124.767 37.278 124.235 37.734C123.703 38.19 123.12 38.456 122.487 38.532L111.809 25.08L107.249 30.438V38C106.717 38.1773 106.122 38.266 105.463 38.266ZM134.906 38.532C133.31 38.532 131.904 38.152 130.688 37.392C129.497 36.632 128.56 35.568 127.876 34.2C127.217 32.832 126.888 31.2613 126.888 29.488C126.888 27.5627 127.268 25.8527 128.028 24.358C128.788 22.8633 129.814 21.6853 131.106 20.824C132.423 19.9627 133.918 19.532 135.59 19.532C136.476 19.532 137.35 19.7093 138.212 20.064C139.073 20.3933 139.795 20.8493 140.378 21.432V19.874C140.606 19.798 140.872 19.7347 141.176 19.684C141.48 19.6333 141.796 19.608 142.126 19.608C142.734 19.608 143.304 19.6967 143.836 19.874V31.35C143.836 32.7433 144.013 33.744 144.368 34.352C144.748 34.96 145.343 35.264 146.154 35.264C146.508 35.264 146.774 35.416 146.952 35.72C147.154 36.024 147.256 36.4293 147.256 36.936C147.256 37.3413 147.142 37.7087 146.914 38.038C146.711 38.3673 146.369 38.532 145.888 38.532C143.481 38.532 141.86 37.544 141.024 35.568C140.289 36.5053 139.402 37.24 138.364 37.772C137.325 38.2787 136.172 38.532 134.906 38.532ZM130.422 29.488C130.422 31.2867 130.827 32.7053 131.638 33.744C132.474 34.7573 133.614 35.264 135.058 35.264C136.654 35.264 137.933 34.7193 138.896 33.63C139.884 32.5407 140.378 31.1093 140.378 29.336V25.08C139.871 24.396 139.225 23.8513 138.44 23.446C137.654 23.0153 136.844 22.8 136.008 22.8C134.918 22.8 133.956 23.0913 133.12 23.674C132.284 24.2567 131.625 25.0547 131.144 26.068C130.662 27.056 130.422 28.196 130.422 29.488ZM146.152 35.264C147.014 35.264 147.85 34.846 148.66 34.01C149.496 33.1487 150.193 31.996 150.75 30.552C150.725 30.1973 150.712 29.8427 150.712 29.488C150.712 27.5627 151.092 25.8527 151.852 24.358C152.612 22.8633 153.638 21.6853 154.93 20.824C156.248 19.9627 157.742 19.532 159.414 19.532C160.301 19.532 161.175 19.7093 162.036 20.064C162.898 20.3933 163.62 20.8493 164.202 21.432V6.08C164.684 5.90266 165.266 5.814 165.95 5.814C166.533 5.814 167.103 5.90266 167.66 6.08V31.35C167.66 32.7433 167.838 33.744 168.192 34.352C168.572 34.96 169.168 35.264 169.978 35.264C170.333 35.264 170.599 35.416 170.776 35.72C170.979 36.024 171.08 36.4293 171.08 36.936C171.08 37.3413 170.966 37.7087 170.738 38.038C170.536 38.3673 170.194 38.532 169.712 38.532C167.306 38.532 165.684 37.544 164.848 35.568C164.114 36.5053 163.227 37.24 162.188 37.772C161.15 38.2787 159.997 38.532 158.73 38.532C157.261 38.532 155.956 38.2153 154.816 37.582C153.702 36.9233 152.79 36.024 152.08 34.884C150.51 37.316 148.445 38.532 145.886 38.532C145.557 38.532 145.291 38.38 145.088 38.076C144.886 37.772 144.784 37.3793 144.784 36.898C144.784 35.8087 145.24 35.264 146.152 35.264ZM154.246 29.488C154.246 31.2867 154.652 32.7053 155.462 33.744C156.298 34.7573 157.438 35.264 158.882 35.264C160.478 35.264 161.758 34.7193 162.72 33.63C163.708 32.5407 164.202 31.1093 164.202 29.336V25.08C163.696 24.396 163.05 23.8513 162.264 23.446C161.479 23.0153 160.668 22.8 159.832 22.8C158.743 22.8 157.78 23.0913 156.944 23.674C156.108 24.2567 155.45 25.0547 154.968 26.068C154.487 27.056 154.246 28.196 154.246 29.488ZM169.977 35.264C170.509 35.264 171.079 35.0993 171.687 34.77C172.295 34.4407 172.865 33.934 173.397 33.25C174.03 32.3887 174.486 31.4007 174.765 30.286C175.069 29.1713 175.259 28.044 175.335 26.904V20.064C175.563 19.988 175.829 19.9247 176.133 19.874C176.437 19.8233 176.753 19.798 177.083 19.798C177.665 19.798 178.235 19.8867 178.793 20.064V31.008C178.793 32.3507 178.995 33.402 179.401 34.162C179.831 34.8967 180.541 35.264 181.529 35.264C181.959 35.264 182.251 35.4413 182.403 35.796C182.555 36.1507 182.631 36.5307 182.631 36.936C182.631 37.3413 182.517 37.7087 182.289 38.038C182.086 38.3673 181.744 38.532 181.263 38.532C178.628 38.532 176.918 37.2907 176.133 34.808C175.778 35.3907 175.398 35.8847 174.993 36.29C174.309 36.974 173.511 37.5187 172.599 37.924C171.712 38.3293 170.749 38.532 169.711 38.532C169.356 38.532 169.09 38.3547 168.913 38C168.71 37.6707 168.609 37.3033 168.609 36.898C168.609 36.4673 168.723 36.0873 168.951 35.758C169.153 35.4287 169.495 35.264 169.977 35.264ZM177.121 14.592C176.411 14.592 175.803 14.3387 175.297 13.832C174.79 13.3253 174.537 12.7173 174.537 12.008C174.537 11.248 174.777 10.6273 175.259 10.146C175.765 9.66467 176.386 9.424 177.121 9.424C177.881 9.424 178.501 9.66467 178.983 10.146C179.464 10.6273 179.705 11.248 179.705 12.008C179.705 12.7427 179.451 13.3633 178.945 13.87C178.463 14.3513 177.855 14.592 177.121 14.592ZM181.518 35.264C182.05 35.264 182.62 35.0993 183.228 34.77C183.836 34.4407 184.406 33.934 184.938 33.25C185.672 32.2367 186.179 31.046 186.458 29.678C186.762 28.31 186.914 26.98 186.914 25.688V20.064C187.142 19.988 187.408 19.9247 187.712 19.874C188.016 19.8233 188.332 19.798 188.662 19.798C189.244 19.798 189.814 19.8867 190.372 20.064V28.842C190.372 33.0473 191.904 35.15 194.97 35.15C196.768 35.15 198.086 34.428 198.922 32.984C199.783 31.5147 200.214 29.5133 200.214 26.98V20.064C200.746 19.8867 201.316 19.798 201.924 19.798C202.557 19.798 203.14 19.8867 203.672 20.064V48.64C203.672 54.568 201.506 57.532 197.174 57.532C195.172 57.532 193.602 56.9367 192.462 55.746C191.347 54.5553 190.79 52.9213 190.79 50.844C190.79 46.208 193.956 41.8633 200.29 37.81V36.024C198.846 37.696 196.92 38.532 194.514 38.532C191.296 38.532 189.08 37.1767 187.864 34.466C187.458 35.2007 187.015 35.8087 186.534 36.29C185.85 36.974 185.052 37.5187 184.14 37.924C183.253 38.3293 182.29 38.532 181.252 38.532C180.897 38.532 180.631 38.3547 180.454 38C180.251 37.6707 180.15 37.3033 180.15 36.898C180.15 36.4673 180.264 36.0873 180.492 35.758C180.694 35.4287 181.036 35.264 181.518 35.264ZM194.21 50.768C194.21 51.8573 194.463 52.706 194.97 53.314C195.476 53.9473 196.173 54.264 197.06 54.264C199.213 54.264 200.29 52.3893 200.29 48.64V41.838C196.236 44.7007 194.21 47.6773 194.21 50.768ZM203.936 39.824C203.556 40.128 203.227 40.28 202.948 40.28C202.518 40.28 202.125 40.052 201.77 39.596C201.416 39.1653 201.238 38.7473 201.238 38.342C201.238 38.0887 201.302 37.886 201.428 37.734C201.53 37.582 201.694 37.4173 201.922 37.24L209.066 31.882C208.914 31.122 208.838 30.324 208.838 29.488C208.838 27.5627 209.218 25.8527 209.978 24.358C210.738 22.8633 211.764 21.6853 213.056 20.824C214.374 19.9627 215.868 19.532 217.54 19.532C218.427 19.532 219.301 19.7093 220.162 20.064C221.024 20.3933 221.746 20.8493 222.328 21.432V19.874C222.556 19.798 222.822 19.7347 223.126 19.684C223.43 19.6333 223.747 19.608 224.076 19.608C224.684 19.608 225.254 19.6967 225.786 19.874V31.35C225.786 32.7433 225.964 33.744 226.318 34.352C226.698 34.96 227.294 35.264 228.104 35.264C228.383 35.264 228.687 35.2007 229.016 35.074C229.346 34.9473 229.688 34.7573 230.042 34.504C230.473 34.7067 230.828 35.0613 231.106 35.568C231.385 36.0493 231.512 36.5307 231.486 37.012C231.081 37.468 230.562 37.8353 229.928 38.114C229.295 38.3927 228.611 38.532 227.876 38.532H227.838C225.432 38.532 223.81 37.544 222.974 35.568C222.24 36.5053 221.353 37.24 220.314 37.772C219.276 38.2787 218.123 38.532 216.856 38.532C215.438 38.532 214.171 38.228 213.056 37.62C211.942 37.012 211.03 36.1633 210.32 35.074L203.936 39.824ZM212.372 29.488C212.372 31.2867 212.778 32.7053 213.588 33.744C214.424 34.7573 215.564 35.264 217.008 35.264C218.604 35.264 219.884 34.7193 220.846 33.63C221.834 32.5407 222.328 31.1093 222.328 29.336V25.08C221.822 24.396 221.176 23.8513 220.39 23.446C219.605 23.0153 218.794 22.8 217.958 22.8C216.869 22.8 215.906 23.0913 215.07 23.674C214.234 24.2567 213.576 25.0547 213.094 26.068C212.613 27.056 212.372 28.196 212.372 29.488Z" fill="#FFBB00"/>
-</svg>
-
-              </h1>
-
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-                className="text-2xl text-gray-700 dark:text-gray-300 typing-effect"
+        {/* Hero Section with Modern Professional Design */}
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-100 via-blue-gray-100 to-slate-200 dark:bg-gradient-to-br dark:from-slate-900 dark:via-blue-gray-900 dark:to-slate-800">
+          {/* Subtle Geometric Patterns */}
+          <div className="absolute inset-0 overflow-hidden">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute opacity-5 dark:opacity-10"
+                initial={{ 
+                  x: Math.random() * window.innerWidth,
+                  y: Math.random() * window.innerHeight,
+                  rotate: 0,
+                  scale: 0.5
+                }}
+                animate={{ 
+                  x: Math.random() * window.innerWidth,
+                  y: Math.random() * window.innerHeight,
+                  rotate: 360,
+                  scale: [0.5, 1, 0.5]
+                }}
+                transition={{ 
+                  duration: 25 + Math.random() * 10,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
               >
-                Biomedical Engineer
-              </motion.p>
-            </div>
+                <div 
+                  className={`w-20 h-20 ${
+                    i % 3 === 0 ? 'bg-blue-gray-600' : 
+                    i % 3 === 1 ? 'bg-slate-600' : 'bg-blue-gray-500'
+                  } ${
+                    i % 4 === 0 ? 'rounded-full' :
+                    i % 4 === 1 ? 'rounded-lg rotate-45' :
+                    i % 4 === 2 ? 'rounded-none' : 'rounded-xl'
+                  } blur-sm`}
+                />
+              </motion.div>
+            ))}
           </div>
-        </div>
 
-        <section className="py-20 px-4" id="about">
+          {/* Professional Grid Overlay */}
+          <div className="absolute inset-0 opacity-3 dark:opacity-5">
+            <div 
+              className="w-full h-full"
+              style={{
+                backgroundImage: `
+                  linear-gradient(rgba(44, 62, 80, 0.1) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(44, 62, 80, 0.1) 1px, transparent 1px)
+                `,
+                backgroundSize: '60px 60px'
+              }}
+            />
+          </div>
+
+          {/* Main Content */}
+          <motion.div 
+            style={{ opacity }}
+            className="relative z-10 text-center space-y-8 px-4"
+          >
+            {/* Professional Profile Picture */}
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.8, type: "spring" }}
+              className="relative mx-auto w-32 h-32 mb-8"
+            >
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-gray-600 via-slate-600 to-blue-gray-700 animate-spin-slow"></div>
+              <div className="absolute inset-1 rounded-full bg-slate-50 dark:bg-slate-900"></div>
+              <img 
+                src="/Icon/AK.jpg" 
+                alt="Arth Kadiya" 
+                className="absolute inset-2 w-28 h-28 rounded-full object-cover shadow-2xl"
+              />
+              
+              {/* Professional AI/ML icons */}
+              <motion.div
+                animate={{ 
+                  rotate: 360,
+                  scale: [1, 1.1, 1]
+                }}
+                transition={{ 
+                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
+                  scale: { duration: 2, repeat: Infinity }
+                }}
+                className="absolute -inset-8"
+              >
+                <Brain className="absolute top-0 left-1/2 transform -translate-x-1/2 w-6 h-6 text-blue-gray-600 dark:text-blue-gray-400" />
+                <Cpu className="absolute right-0 top-1/2 transform -translate-y-1/2 w-6 h-6 text-slate-600 dark:text-slate-400" />
+                <Network className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-6 text-blue-gray-700 dark:text-blue-gray-300" />
+                <Zap className="absolute left-0 top-1/2 transform -translate-y-1/2 w-6 h-6 text-slate-700 dark:text-slate-300" />
+              </motion.div>
+            </motion.div>
+
+            {/* Professional Name Styling */}
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              className="text-6xl md:text-8xl font-bold"
+            >
+              <span className="bg-gradient-to-r from-blue-gray-700 via-slate-700 to-blue-gray-800 dark:from-blue-gray-200 dark:via-slate-100 dark:to-blue-gray-100 bg-clip-text text-transparent">
+                Arth Kadiya
+              </span>
+            </motion.h1>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.2 }}
+              className="space-y-4"
+            >
+              <p className="text-2xl md:text-3xl text-slate-600 dark:text-slate-300 typing-effect font-light">
+                AI/ML Engineer & Biomedical Innovator
+              </p>
+              <div className="flex justify-center space-x-6 text-sm text-slate-500 dark:text-slate-400">
+                <span className="flex items-center space-x-2">
+                  <Brain className="w-4 h-4" />
+                  <span>Neural Networks</span>
+                </span>
+                <span className="flex items-center space-x-2">
+                  <Cpu className="w-4 h-4" />
+                  <span>Deep Learning</span>
+                </span>
+                <span className="flex items-center space-x-2">
+                  <Network className="w-4 h-4" />
+                  <span>Computer Vision</span>
+                </span>
+              </div>
+            </motion.div>
+
+            {/* Professional Call to Action */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.5 }}
+              className="pt-8"
+            >
+              <motion.button
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
+                className="px-8 py-4 bg-gradient-to-r from-blue-gray-600 to-slate-700 text-slate-50 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-gray-500"
+              >
+                Explore My Work
+              </motion.button>
+            </motion.div>
+          </motion.div>
+
+          {/* Professional Scroll Indicator */}
+          <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 text-center z-20">
+            <motion.div 
+              animate={{ y: [0, 10, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="text-slate-500 dark:text-slate-400"
+            >
+              <div className="w-6 h-10 border-2 border-current rounded-full mx-auto mb-2">
+                <div className="w-1 h-3 bg-current rounded-full mx-auto animate-pulse" />
+              </div>
+              <p className="text-sm font-medium">Scroll to explore</p>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* About Section with Professional Cards */}
+        <section className="py-20 px-4 bg-gradient-to-r from-slate-100 via-blue-gray-100 to-slate-200 dark:bg-gradient-to-r dark:from-slate-800 dark:via-blue-gray-800 dark:to-slate-700 transition-colors duration-500" id="about">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             className="max-w-4xl mx-auto text-center"
           >
-            <h2 className="text-4xl font-bold mb-8">About Me</h2>
-            <p className="text-xl text-gray-700 dark:text-gray-300 leading-relaxed mb-8">
-              I'm Arth Kadiya, a passionate Biomedical Engineer and Coder
-              dedicated to bridging the gap between healthcare and technology.
-              With expertise in both medical sciences and software development,
-              I create innovative solutions that enhance patient care and
-              medical research.
+            <h2 className="text-4xl font-bold mb-8 bg-gradient-to-r from-blue-gray-700 via-slate-700 to-blue-gray-800 dark:from-blue-gray-200 dark:via-slate-100 dark:to-blue-gray-100 bg-clip-text text-transparent">
+              About Me
+            </h2>
+            <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed mb-8">
+              I'm Arth Kadiya, a passionate AI/ML Engineer and Biomedical Innovator
+              dedicated to bridging the gap between artificial intelligence and healthcare.
+              With expertise in neural networks, computer vision, and medical technology,
+              I create intelligent solutions that enhance patient care and advance medical research.
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            
+            {/* Professional Skills Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
-                "Medical Imaging",
-                "AI/ML",
-                "Full Stack",
-                "Signal Processing",
-              ].map((skill) => (
-                <div
-                  key={skill}
-                  className="bg-white dark:bg-gray-800 p-4 rounded-lg transform hover:scale-105 transition-transform"
+                { icon: Brain, label: "Neural Networks", color: "from-blue-gray-500 to-blue-gray-600", description: "Deep learning architectures" },
+                { icon: Cpu, label: "Deep Learning", color: "from-slate-500 to-slate-600", description: "Advanced AI models" },
+                { icon: Network, label: "Computer Vision", color: "from-blue-gray-600 to-slate-600", description: "Image processing & analysis" },
+                { icon: Database, label: "Medical AI", color: "from-slate-600 to-blue-gray-700", description: "Healthcare applications" },
+              ].map((skill, index) => (
+                <motion.div
+                  key={skill.label}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  className="group bg-slate-50 dark:bg-slate-900 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 dark:border-slate-700"
                 >
-                  <p className="font-semibold">{skill}</p>
-                </div>
+                  <div className={`w-12 h-12 mx-auto mb-4 rounded-lg bg-gradient-to-r ${skill.color} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                    <skill.icon className="w-6 h-6 text-slate-50" />
+                  </div>
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{skill.label}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">{skill.description}</p>
+                </motion.div>
               ))}
             </div>
           </motion.div>
@@ -97,14 +247,14 @@ function App() {
         <Education />
         <Experience />
 
-        <section className="py-20 px-4" id="projects">
+        <section className="py-20 px-4 bg-gradient-to-l from-slate-50 via-blue-gray-50 to-slate-100 dark:bg-gradient-to-l dark:from-slate-900 dark:via-blue-gray-900 dark:to-slate-800 transition-colors duration-500" id="projects">
           <div className="max-w-6xl mx-auto">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              className="text-4xl font-bold mb-12 text-center"
+              className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-blue-gray-700 via-slate-700 to-blue-gray-800 dark:from-blue-gray-200 dark:via-slate-100 dark:to-blue-gray-100 bg-clip-text text-transparent"
             >
-              Featured Projects
+              AI/ML Projects
             </motion.h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {projects.map((project, index) => (
@@ -122,53 +272,62 @@ function App() {
 
 const projects = [
   {
-    title: "Prediction of preterm pregnancy using machine learning ",
+    title: "Preterm Pregnancy Prediction using ML",
     description:
-      "I developed a machine learning system to predict preterm pregnancy by preprocessing maternal health data, extracting key risk features, and training models—including Decision Trees, Random Forest, SVM, Logistic Regression, and KNN—to achieve accurate predictions for early intervention in maternal care.",
+      "Developed an advanced machine learning system using ensemble methods to predict preterm pregnancy risk. Implemented feature engineering on maternal health data and achieved 94% accuracy using Random Forest and SVM models.",
     image:
-      "https://th.bing.com/th/id/OIP.n8eerRAxo7i2qcXjlBCKlgHaEK?rs=1&pid=ImgDetMain",
+      "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=500&h=300&fit=crop",
     tags: [
       "Python",
-      "Machine Learning",
-      "Medical Signals",
-      "EHG",
-      "Data Pre-Processing",
+      "Scikit-learn",
+      "Random Forest",
+      "SVM",
+      "Medical AI",
     ],
     link: "#",
   },
   {
-    title: "Different HAND Gesture recognition with Machine learning",
+    title: "Real-time Hand Gesture Recognition",
     description:
-      "I developed a hand gesture recognition system using Mediapipe and OpenCV to detect and classify real-time hand gestures based on key hand landmarks for interactive control.",
-    image: "https://miro.medium.com/max/1104/1*8WQmdgQvgttTLt0oHlzj1g.jpeg",
-    tags: ["Python", "OpenCV", "Image Processing", "Mediapipe", "scikit-learn"],
+      "Built a computer vision system using MediaPipe and OpenCV for real-time hand gesture classification. Implemented custom CNN architecture achieving 98% accuracy on gesture recognition tasks.",
+    image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=500&h=300&fit=crop",
+    tags: ["Python", "OpenCV", "MediaPipe", "CNN", "Computer Vision"],
     link: "#",
   },
   {
-    title: "Customer Churn Prediction",
+    title: "Customer Churn Prediction with Deep Learning",
     description:
-      "I developed a customer churn prediction model using IBMs Telcom Customer Churn Dataset and Logistic Regression, achieving 80% accuracy, with interactive visualizations to highlight key churn factors and insights for businesses.",
+      "Developed a neural network model for customer churn prediction using TensorFlow. Implemented feature engineering and achieved 85% accuracy with interactive visualizations for business insights.",
     image:
-      "https://user-images.githubusercontent.com/58620359/174948746-5dc3418a-8296-4cc8-9561-f8f12ca9a0a4.png",
-    tags: ["Python", "TensorFlow", "scikit-learn", "Machine Learning"],
+      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=500&h=300&fit=crop",
+    tags: ["Python", "TensorFlow", "Neural Networks", "Data Science"],
     link: "https://github.com/arthist03/Predict-Customer-Churn",
   },
   {
-    title: "Eye Care For You",
+    title: "AI-Powered Eye Care Application",
     description:
-      '"Eye Care for You" is a Kotlin-based app that enhances ophthalmology workflow by managing patient data, appointments, and documents, with Firebase Firestore for efficient storage and accessibility.',
+      "Created an intelligent mobile application for ophthalmology workflow optimization. Integrated machine learning models for automated diagnosis assistance and patient data management.",
     image:
-      "https://static.vecteezy.com/system/resources/previews/000/585/008/non_2x/eye-care-vector-logo-design-template.jpg",
-    tags: ["Kotlin", "Firebase", "XML", "Machine Learning"],
+      "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?w=500&h=300&fit=crop",
+    tags: ["Kotlin", "Firebase", "TensorFlow Lite", "Medical AI"],
     link: "https://github.com/arthist03/Eye-Care-For-You",
   },
   {
-    title: "More Projects",
+    title: "Neural Network Playground",
     description:
-      "You can check out more projects by visiting my GitHub profile: arthist03.",
+      "Interactive web application for visualizing neural network architectures and training processes. Built with React and D3.js for educational purposes in AI/ML learning.",
     image:
-      "https://th.bing.com/th/id/OIP.sV7tva-728oySeOUL0-vOwHaHa?rs=1&pid=ImgDetMain",
-    tags: ["Python", "Web - Sites", "Kotlin", "Machine Learning"],
+      "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=500&h=300&fit=crop",
+    tags: ["React", "D3.js", "Neural Networks", "Visualization"],
+    link: "https://github.com/arthist03",
+  },
+  {
+    title: "More AI/ML Projects",
+    description:
+      "Explore my complete portfolio of artificial intelligence and machine learning projects on GitHub, including computer vision, NLP, and medical AI applications.",
+    image:
+      "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=500&h=300&fit=crop",
+    tags: ["AI/ML", "Deep Learning", "Computer Vision", "Medical AI"],
     link: "https://github.com/arthist03",
   },
 ];

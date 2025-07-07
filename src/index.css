@@ -1,94 +1,121 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: dark;
-}
-
 html {
   scroll-behavior: smooth;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
 body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
 
-/* Hide default cursor throughout the page */
+/* Enhanced cursor hiding */
 body {
   cursor: none;
 }
 
-body a,
-body button {
-  cursor: none;
+body *:not(nav *) {
+  cursor: none !important;
 }
 
-/* Show the default cursor in the navbar */
-nav {
-  cursor: default;
+/* Navbar cursor override */
+nav,
+nav * {
+  cursor: auto !important;
 }
 
 nav a,
 nav button {
-  cursor: pointer;
+  cursor: pointer !important;
 }
 
-/* Smooth theme transitions */
-.transition-theme {
-  transition: background-color 0.5s ease-in-out, color 0.3s ease-in-out;
-}
-
+/* Professional scrollbar with Modern Palette */
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-200 dark:bg-gray-800;
+  @apply bg-slate-100 dark:bg-slate-800;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-blue-600 dark:bg-blue-700 rounded-full;
+  @apply bg-gradient-to-b from-blue-gray-600 to-slate-700;
+  border-radius: 4px;
+  transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-blue-700 dark:bg-blue-800;
+  @apply from-blue-gray-700 to-slate-800;
+  box-shadow: 0 0 10px rgba(71, 85, 105, 0.5);
 }
 
-@keyframes fadeInUp {
-  0% {
-    stroke-dashoffset: 50;
-    fill: transparent;
+/* Firefox scrollbar */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 #f1f5f9;
+}
+
+.dark html {
+  scrollbar-color: #475569 #1e293b;
+}
+
+/* Professional AI-themed animations */
+@keyframes aiPulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
   }
-  90% {
-    fill: transparent;
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes neuralNetwork {
+  0% {
+    stroke-dashoffset: 100;
   }
   100% {
     stroke-dashoffset: 0;
-    fill: #FFA500;
   }
 }
 
-.text path {
-  fill: transparent;
-  stroke: #f7a0a0;
-  stroke-width: 0.3;
-  stroke-dasharray: 50;
-  stroke-dashoffset: 50;
-  animation: fadeInUp 2s ease-in-out 1 forwards;
+@keyframes dataFlow {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
 }
 
+/* Professional typing effect */
 .typing-effect {
   display: inline-block;
-  overflow: hidden; /* Ensures the content hides until it's typed */
-  border-right: 2px solid #333; /* Optional: creates a cursor-like effect */
-  white-space: nowrap; /* Prevents text from wrapping to the next line */
-  animation: typing 1s steps(25) 1s forwards, step-start 0.5s step-end;
+  overflow: hidden;
+  border-right: 3px solid;
+  border-color: #475569;
+  white-space: nowrap;
+  animation: typing 2.5s steps(30) 1s forwards, 
+             blink 1s step-end infinite 3.5s,
+             professionalGlow 2s ease-in-out infinite 4s;
+  width: 0;
 }
 
 @keyframes typing {
@@ -96,12 +123,184 @@ nav button {
     width: 0;
   }
   to {
-    width: 60%;
+    width: 100%;
   }
 }
 
 @keyframes blink {
-  30% {
+  0%, 50% {
+    border-color: #475569;
+  }
+  51%, 100% {
     border-color: transparent;
   }
+}
+
+@keyframes professionalGlow {
+  0%, 100% {
+    text-shadow: 0 0 5px rgba(71, 85, 105, 0.3);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(71, 85, 105, 0.6), 0 0 30px rgba(51, 65, 85, 0.4);
+  }
+}
+
+/* Performance optimizations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .typing-effect {
+    animation: none;
+    width: 100%;
+    border-right: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --accent-primary: #2C3E50;
+    --accent-secondary: #34495E;
+  }
+  
+  .dark {
+    --accent-primary: #BDC3C7;
+    --accent-secondary: #ECF0F1;
+  }
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid #475569;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Selection styles with Professional Palette */
+::selection {
+  background: linear-gradient(45deg, #2C3E50, #34495E);
+  color: #ECF0F1;
+}
+
+/* Professional gradient utilities */
+.ai-gradient {
+  background: linear-gradient(135deg, #2C3E50, #34495E, #475569);
+}
+
+.ai-gradient-text {
+  background: linear-gradient(135deg, #2C3E50, #34495E, #475569);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Neural network visualization with Professional colors */
+.neural-node {
+  animation: aiPulse 2s ease-in-out infinite;
+}
+
+.neural-connection {
+  stroke-dasharray: 5, 5;
+  animation: neuralNetwork 3s linear infinite;
+}
+
+/* Data flow animation */
+.data-particle {
+  animation: dataFlow 3s linear infinite;
+}
+
+/* Professional hover effects */
+.ai-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(71, 85, 105, 0.2);
+  transition: all 0.3s ease;
+}
+
+.dark .ai-hover:hover {
+  box-shadow: 0 10px 25px rgba(71, 85, 105, 0.4);
+}
+
+/* Professional gradient backgrounds */
+.gradient-bg {
+  background: linear-gradient(135deg, #2C3E50 0%, #34495E 100%);
+}
+
+.dark .gradient-bg {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Professional pulse animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(71, 85, 105, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(71, 85, 105, 0.8), 0 0 30px rgba(51, 65, 85, 0.6);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Professional loading animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.dark .shimmer {
+  background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+  background-size: 200px 100%;
+}
+
+/* Professional glass morphism */
+.glass {
+  background: rgba(241, 245, 249, 0.1);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(203, 213, 225, 0.2);
+  box-shadow: 0 8px 32px rgba(44, 62, 80, 0.1);
+}
+
+.dark .glass {
+  background: rgba(15, 23, 42, 0.2);
+  border: 1px solid rgba(71, 85, 105, 0.1);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.3);
 }

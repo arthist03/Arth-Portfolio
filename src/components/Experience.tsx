@@ -53,14 +53,14 @@ const Experience = () => {
 
   return (
     <section
-      className="py-20 bg-gray-100 dark:bg-gray-800 transition-colors duration-300"
+      className="py-20 bg-slate-50 dark:bg-slate-900 transition-colors duration-300"
       id="experience"
     >
       <div className="max-w-6xl mx-auto px-4">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          className="text-4xl font-bold mb-12 text-center"
+          className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-blue-gray-700 via-slate-700 to-blue-gray-800 dark:from-blue-gray-200 dark:via-slate-100 dark:to-blue-gray-100 bg-clip-text text-transparent"
         >
           Experience
         </motion.h2>
@@ -85,7 +85,7 @@ const Experience = () => {
                   >
                     <div
                       className={`absolute inset-0 ${
-                        theme === 'dark' ? 'bg-black/60' : 'bg-white/60'
+                        theme === 'dark' ? 'bg-slate-900/80' : 'bg-slate-100/90'
                       } backdrop-blur-sm`}
                     />
                     <img
@@ -101,48 +101,48 @@ const Experience = () => {
               <div
                 className={`rounded-lg p-6 shadow-xl transition-all duration-300 ${
                   theme === 'dark'
-                    ? 'bg-gray-900/80 backdrop-blur-sm hover:bg-gray-900/90'
-                    : 'bg-white/80 backdrop-blur-sm hover:bg-white/90'
+                    ? 'bg-slate-900/90 backdrop-blur-sm hover:bg-slate-900/95 border border-slate-700'
+                    : 'bg-slate-100/90 backdrop-blur-sm hover:bg-slate-100/95 border border-slate-200'
                 }`}
               >
                 <div className="flex items-start gap-4">
                   <div
                     className={`p-3 rounded-full transition-colors ${
                       theme === 'dark'
-                        ? 'bg-purple-500/20 group-hover:bg-purple-500/30'
-                        : 'bg-purple-100 group-hover:bg-purple-200'
+                        ? 'bg-slate-600/20 group-hover:bg-slate-600/30'
+                        : 'bg-slate-200 group-hover:bg-slate-300'
                     }`}
                   >
                     <Briefcase
                       className={`w-6 h-6 ${
-                        theme === 'dark' ? 'text-purple-400' : 'text-purple-600'
+                        theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
                       }`}
                     />
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
-                      <h3 className="text-xl font-semibold mb-2">{exp.title}</h3>
-                      <div className="flex items-center text-gray-500 dark:text-gray-400">
+                      <h3 className="text-xl font-semibold mb-2 text-slate-800 dark:text-slate-100">{exp.title}</h3>
+                      <div className="flex items-center text-slate-500 dark:text-slate-400">
                         <Calendar className="w-4 h-4 mr-2" />
                         <span>{exp.period}</span>
                       </div>
                     </div>
                     <p
                       className={`mb-3 ${
-                        theme === 'dark' ? 'text-purple-400' : 'text-purple-600'
+                        theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
                       }`}
                     >
                       {exp.company}
                     </p>
-                    <p className="text-gray-700 dark:text-gray-300 mb-4">{exp.description}</p>
+                    <p className="text-slate-700 dark:text-slate-300 mb-4">{exp.description}</p>
                     <div className="flex flex-wrap gap-2">
                       {exp.technologies.map((tech, i) => (
                         <span
                           key={i}
                           className={`px-3 py-1 rounded-full text-sm ${
                             theme === 'dark'
-                              ? 'bg-purple-500/20 text-purple-300'
-                              : 'bg-purple-100 text-purple-700'
+                              ? 'bg-slate-600/20 text-slate-300 border border-slate-600/30'
+                              : 'bg-slate-200 text-slate-700 border border-slate-300'
                           }`}
                         >
                           {tech}
