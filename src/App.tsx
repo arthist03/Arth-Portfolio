@@ -162,7 +162,7 @@ function App() {
               className="space-y-4"
             >
               <p className="text-2xl md:text-3xl text-slate-600 dark:text-slate-300 typing-effect font-light">
-                AI/ML Engineer & Biomedical Engineer
+                AI/ML & Biomedical Engineer
               </p>
               <div className="flex justify-center space-x-6 text-sm text-slate-500 dark:text-slate-400">
                 <span className="flex items-center space-x-2">
@@ -232,7 +232,7 @@ function App() {
               About Me
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed mb-8">
-              I'm Arth Kadiya, a passionate AI/ML Engineer and Biomedical
+              I'm Arth Kadiya, a passionate AI/ML and Biomedical
               Engineer dedicated to bridging the gap between artificial
               intelligence and healthcare. With expertise in neural networks,
               computer vision, and medical technology, I create intelligent
