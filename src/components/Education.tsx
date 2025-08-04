@@ -11,12 +11,12 @@ const Education = () => {
     {
       degree: "M.Tech in Medical Technologies",
       institution: "Indian Institute of Technology Jodhpur, Rajasthan, India",
-      year: "2025-2027",
+      year: "2025–2027",
       description:
-        "Pursuing an M.Tech in Medical Technologies, a joint program by IIT Jodhpur and AIIMS Jodhpur, I focus on innovating advanced healthcare solutions, integrating engineering excellence with clinical expertise.",
+        "Pursuing an M.Tech in Medical Technologies, a joint program by IIT Jodhpur and AIIMS Jodhpur, I focus on innovating advanced healthcare solutions by integrating engineering excellence with clinical expertise.",
       image:
         "https://tse1.mm.bing.net/th/id/OIP.vIyTNgAeQ7rEqDqLAWt0LgHaEi?r=0&rs=1&pid=ImgDetMain&o=7&rm=3",
-      link: "https://www.bing.com/ck/a?!&&p=042576c3d2c1ac16873e4f1adb9cd977fc06fc13c952531c57175fcfc5eda925JmltdHM9MTc1NDI2NTYwMA&ptn=3&ver=2&hsh=4&fclid=07ffa49e-fcc6-69f0-1141-b773fd3e68c1&psq=iit+jodhpur&u=a1aHR0cHM6Ly9paXRqLmFjLmluLw&ntb=1",
+      link: "https://iitj.ac.in/",
     },
     {
       degree: "B.Tech in Biomedical Engineering",
