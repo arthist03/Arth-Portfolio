@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { GraduationCap, Calendar, ExternalLink } from 'lucide-react';
-import { useTheme } from './ThemeContext';
+import React, { useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { GraduationCap, Calendar, ExternalLink } from "lucide-react";
+import { useTheme } from "./ThemeContext";
 
 const Education = () => {
   const [hoveredSchool, setHoveredSchool] = useState<number | null>(null);
@@ -9,20 +9,33 @@ const Education = () => {
 
   const education = [
     {
-      degree: 'B.Tech in Biomedical Engineering',
-      institution: 'Manipal Institute of Technology, Manipal, Karnataka, India',
-      year: '2022-2025',
-      description: 'As a B.Tech biomedical engineering student at MIT Manipal, Karnataka, I benefit from top-tier education, cutting-edge research facilities, and strong industry connections in India\'s tech hub, equipping me to make a meaningful impact in biomedical engineering.',
-      image: 'https://media.getmyuni.com/azure/college-image/big/manipal-institute-of-technology-mit-manipal.jpg',
-      link: 'https://www.manipal.edu/mit.html',
+      degree: "M.Tech in Medical Technologies",
+      institution: "Indian Institute of Technology Jodhpur, Rajasthan, India",
+      year: "2025-2027",
+      description:
+        "Pursuing an M.Tech in Medical Technologies, a joint program by IIT Jodhpur and AIIMS Jodhpur, I focus on innovating advanced healthcare solutions, integrating engineering excellence with clinical expertise.",
+      image:
+        "https://tse1.mm.bing.net/th/id/OIP.vIyTNgAeQ7rEqDqLAWt0LgHaEi?r=0&rs=1&pid=ImgDetMain&o=7&rm=3",
+      link: "https://www.bing.com/ck/a?!&&p=042576c3d2c1ac16873e4f1adb9cd977fc06fc13c952531c57175fcfc5eda925JmltdHM9MTc1NDI2NTYwMA&ptn=3&ver=2&hsh=4&fclid=07ffa49e-fcc6-69f0-1141-b773fd3e68c1&psq=iit+jodhpur&u=a1aHR0cHM6Ly9paXRqLmFjLmluLw&ntb=1",
     },
     {
-      degree: 'Diploma in Biomedical Engineering',
-      institution: 'Ganpat University, Mehsana, Gujarat, India',
-      year: '2019-2022',
-      description: 'My diploma in biomedical engineering from Ganpat University gave me a strong foundation in engineering, biology, and medicine, preparing me to enhance patient care, develop assistive tech, and evaluate medical therapies.',
-      image: 'https://i.ytimg.com/vi/OsoXEo1wpYI/maxresdefault.jpg',
-      link: 'https://www.ganpatuniversity.ac.in/',
+      degree: "B.Tech in Biomedical Engineering",
+      institution: "Manipal Institute of Technology, Manipal, Karnataka, India",
+      year: "2022-2025",
+      description:
+        "As a B.Tech biomedical engineering student at MIT Manipal, Karnataka, I benefit from top-tier education, cutting-edge research facilities, and strong industry connections in India's tech hub, equipping me to make a meaningful impact in biomedical engineering.",
+      image:
+        "https://media.getmyuni.com/azure/college-image/big/manipal-institute-of-technology-mit-manipal.jpg",
+      link: "https://www.manipal.edu/mit.html",
+    },
+    {
+      degree: "Diploma in Biomedical Engineering",
+      institution: "Ganpat University, Mehsana, Gujarat, India",
+      year: "2019-2022",
+      description:
+        "My diploma in biomedical engineering from Ganpat University gave me a strong foundation in engineering, biology, and medicine, preparing me to enhance patient care, develop assistive tech, and evaluate medical therapies.",
+      image: "https://i.ytimg.com/vi/OsoXEo1wpYI/maxresdefault.jpg",
+      link: "https://www.ganpatuniversity.ac.in/",
     },
   ];
 
@@ -64,7 +77,7 @@ const Education = () => {
                   >
                     <div
                       className={`absolute inset-0 ${
-                        theme === 'dark' ? 'bg-slate-900/80' : 'bg-slate-50/90'
+                        theme === "dark" ? "bg-slate-900/80" : "bg-slate-50/90"
                       } backdrop-blur-sm`}
                     />
                     <img
@@ -79,28 +92,32 @@ const Education = () => {
 
               <div
                 className={`rounded-lg p-6 shadow-xl transition-all duration-300 ${
-                  theme === 'dark'
-                    ? 'bg-slate-900/90 backdrop-blur-sm hover:bg-slate-900/95 border border-slate-700'
-                    : 'bg-slate-50/90 backdrop-blur-sm hover:bg-slate-50/95 border border-slate-200'
+                  theme === "dark"
+                    ? "bg-slate-900/90 backdrop-blur-sm hover:bg-slate-900/95 border border-slate-700"
+                    : "bg-slate-50/90 backdrop-blur-sm hover:bg-slate-50/95 border border-slate-200"
                 }`}
               >
                 <div className="flex items-start gap-4">
                   <div
                     className={`p-3 rounded-full transition-colors ${
-                      theme === 'dark'
-                        ? 'bg-blue-gray-600/20 group-hover:bg-blue-gray-600/30'
-                        : 'bg-blue-gray-100 group-hover:bg-blue-gray-200'
+                      theme === "dark"
+                        ? "bg-blue-gray-600/20 group-hover:bg-blue-gray-600/30"
+                        : "bg-blue-gray-100 group-hover:bg-blue-gray-200"
                     }`}
                   >
                     <GraduationCap
                       className={`w-6 h-6 ${
-                        theme === 'dark' ? 'text-blue-gray-400' : 'text-blue-gray-600'
+                        theme === "dark"
+                          ? "text-blue-gray-400"
+                          : "text-blue-gray-600"
                       }`}
                     />
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
-                      <h3 className="text-xl font-semibold mb-2 text-slate-800 dark:text-slate-100">{edu.degree}</h3>
+                      <h3 className="text-xl font-semibold mb-2 text-slate-800 dark:text-slate-100">
+                        {edu.degree}
+                      </h3>
                       <a
                         href={edu.link}
                         target="_blank"
@@ -110,12 +127,16 @@ const Education = () => {
                         <ExternalLink className="w-5 h-5" />
                       </a>
                     </div>
-                    <p className="text-slate-600 dark:text-slate-400 mb-2">{edu.institution}</p>
+                    <p className="text-slate-600 dark:text-slate-400 mb-2">
+                      {edu.institution}
+                    </p>
                     <div className="flex items-center text-slate-500 dark:text-slate-400 mb-2">
                       <Calendar className="w-4 h-4 mr-2" />
                       <span>{edu.year}</span>
                     </div>
-                    <p className="text-slate-700 dark:text-slate-300">{edu.description}</p>
+                    <p className="text-slate-700 dark:text-slate-300">
+                      {edu.description}
+                    </p>
                   </div>
                 </div>
               </div>
