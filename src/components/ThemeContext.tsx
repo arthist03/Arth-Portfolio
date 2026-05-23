@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
-type Theme = 'light' | 'dark';
+type Theme = 'light';
 
 interface ThemeContextType {
   theme: Theme;
@@ -11,61 +11,28 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem('theme');
-      return (savedTheme as Theme) || 
-        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    }
-    return 'light';
-  });
-  
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const theme: Theme = 'light';
+  const isTransitioning = false;
 
   useEffect(() => {
     const root = window.document.documentElement;
     const body = window.document.body;
     
-    // Remove old theme classes
-    root.classList.remove('light', 'dark');
-    body.classList.remove('light', 'dark');
+    // Remove dark class explicitly, add light
+    root.classList.remove('dark');
+    body.classList.remove('dark');
+    root.classList.add('light');
+    body.classList.add('light');
     
-    // Add new theme class
-    root.classList.add(theme);
-    body.classList.add(theme);
+    // Force light Neo-brutalist palette colors on body
+    body.style.backgroundColor = '#fbfaf5'; // Sand/Vanilla
+    body.style.color = '#0f172a'; // Slate-905
     
-    // Apply Modern Professional Palette
-    if (theme === 'dark') {
-      body.style.backgroundColor = '#0f172a'; // slate-900
-      body.style.color = '#f1f5f9'; // slate-100
-    } else {
-      body.style.backgroundColor = '#f8fafc'; // slate-50
-      body.style.color = '#1e293b'; // slate-800
-    }
-    
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleTheme = useCallback(() => {
-    setIsTransitioning(true);
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-    
-    setTimeout(() => {
-      setIsTransitioning(false);
-    }, 300);
+    localStorage.setItem('theme', 'light');
   }, []);
 
-  // Listen for system theme changes
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      if (!localStorage.getItem('theme')) {
-        setTheme(e.matches ? 'dark' : 'light');
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+  const toggleTheme = useCallback(() => {
+    // Locked to light mode: no action
   }, []);
 
   return (

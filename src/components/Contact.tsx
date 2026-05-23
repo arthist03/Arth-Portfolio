@@ -46,195 +46,163 @@ const Contact = () => {
 
   return (
     <section
-      className={`py-20 ${
-        theme === "dark"
-          ? "bg-slate-800 text-slate-100"
-          : "bg-slate-100 text-slate-800"
-      } transition-colors duration-500`}
+      className="py-24 bg-[#fbfaf5] dark:bg-[#0d0e12] border-t-3 border-slate-900 dark:border-slate-800 transition-colors duration-500"
       id="contact"
     >
-      <div className="max-w-4xl mx-auto px-4">
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-blue-gray-700 via-slate-700 to-blue-gray-800 dark:from-blue-gray-200 dark:via-slate-100 dark:to-blue-gray-100 bg-clip-text text-transparent"
-        >
-          Let's Connect
-        </motion.h2>
-        <div className="grid md:grid-cols-2 gap-12">
+      <div className="max-w-5xl mx-auto px-4">
+        
+        <div className="text-center mb-16">
+          <span className="text-xs font-mono-code font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            [CONTACT]
+          </span>
+          <h2 className="text-4xl font-display font-black text-slate-900 dark:text-white uppercase mt-2">
+            Let's Connect
+          </h2>
+          <div className="w-16 h-1.5 bg-slate-900 dark:bg-white mx-auto mt-4" />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 items-start">
+          {/* Information Side (Span 2) */}
           <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="lg:col-span-2 space-y-6"
           >
-            <h3 className="text-2xl font-semibold mb-6">Get in Touch</h3>
-            <p
-              className={`${
-                theme === "dark" ? "text-slate-300" : "text-slate-600"
-              } mb-8`}
-            >
-              I'm always excited to collaborate on innovative projects that
-              combine healthcare and technology. Whether you have a project in
-              mind or just want to connect, feel free to reach out!
+            <h3 className="text-2xl font-display font-black text-slate-900 dark:text-white uppercase">
+              Reach Out Directly
+            </h3>
+            <p className="text-slate-800 dark:text-gray-250 text-sm font-semibold leading-relaxed">
+              I'm always excited to collaborate on innovative projects that combine clinical healthcare and technology. Whether you have a project in mind, research questions, or just want to connect, feel free to drop a message!
             </p>
-            <div className="space-y-4">
-              <a
-                href="https://github.com/arthist03"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`flex items-center space-x-3 ${
-                  theme === "dark"
-                    ? "text-slate-300 hover:text-blue-gray-400"
-                    : "text-slate-600 hover:text-blue-gray-600"
-                } transition-colors`}
-              >
-                <Github className="w-6 h-6" />
-                <span>GitHub</span>
-              </a>
-              <a
-                href="https://linkedin.com/in/arthkadiya"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`flex items-center space-x-3 ${
-                  theme === "dark"
-                    ? "text-slate-300 hover:text-blue-gray-400"
-                    : "text-slate-600 hover:text-blue-gray-600"
-                } transition-colors`}
-              >
-                <Linkedin className="w-6 h-6" />
-                <span>LinkedIn</span>
-              </a>
-              <a
-                href="mailto:arthpk09@gmail.com"
-                className={`flex items-center space-x-3 ${
-                  theme === "dark"
-                    ? "text-slate-300 hover:text-blue-gray-400"
-                    : "text-slate-600 hover:text-blue-gray-600"
-                } transition-colors`}
-              >
-                <Mail className="w-6 h-6" />
-                <span>Email</span>
-              </a>
+            
+            <div className="pt-4 space-y-4">
+              {[
+                { 
+                  name: "GitHub", 
+                  href: "https://github.com/arthist03", 
+                  icon: Github,
+                },
+                { 
+                  name: "LinkedIn", 
+                  href: "https://linkedin.com/in/arthkadiya", 
+                  icon: Linkedin,
+                },
+                { 
+                  name: "Email", 
+                  href: "mailto:arthpk09@gmail.com", 
+                  icon: Mail,
+                }
+              ].map((social) => (
+                <a
+                  key={social.name}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-3.5 text-slate-900 dark:text-white hover:underline decoration-2 font-mono-code text-sm font-bold uppercase tracking-wider group"
+                >
+                  <div className="p-2.5 rounded-lg border-2 border-slate-900 dark:border-white bg-white dark:bg-gray-800 text-slate-900 dark:text-white shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#ffffff] group-hover:translate-x-[1px] group-hover:translate-y-[1px] group-hover:shadow-[1px_1px_0px_0px_#0f172a] dark:group-hover:shadow-[1px_1px_0px_0px_#ffffff] transition-all">
+                    <social.icon className="w-5 h-5 shrink-0" />
+                  </div>
+                  <span>{social.name}</span>
+                </a>
+              ))}
             </div>
           </motion.div>
-          <motion.form
-            ref={formRef}
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            onSubmit={handleSubmit}
-            className="space-y-6"
+
+          {/* Form Side (Span 3) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="neobrutal-card p-8 bg-white dark:bg-[#16171d] lg:col-span-3 w-full"
           >
-            <div>
-              <label
-                htmlFor="to_name"
-                className={`block text-sm font-medium ${
-                  theme === "dark" ? "text-slate-300" : "text-slate-700"
-                } mb-2`}
-              >
-                Sending to:
-              </label>
-              <p
-                id="to_name"
-                className={`w-full px-4 py-2 ${
-                  theme === "dark"
-                    ? "bg-slate-700 text-slate-300 border border-slate-600"
-                    : "bg-slate-50 text-slate-700 border border-slate-300"
-                } rounded-lg`}
-              >
-                Arth Kadiya
-              </p>
-              <input type="hidden" name="to_name" value="Arth Kadiya" />
-            </div>
-            <div>
-              <label
-                htmlFor="user_name"
-                className={`block text-sm font-medium ${
-                  theme === "dark" ? "text-slate-300" : "text-slate-700"
-                } mb-2`}
-              >
-                Name
-              </label>
-              <input
-                type="text"
-                id="user_name"
-                name="user_name"
-                className={`w-full px-4 py-2 ${
-                  theme === "dark"
-                    ? "bg-slate-700 border-slate-600 text-slate-100"
-                    : "bg-slate-50 border-slate-300 text-slate-800"
-                } border rounded-lg focus:ring-2 focus:ring-blue-gray-500 focus:border-transparent transition-colors`}
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="user_email"
-                className={`block text-sm font-medium ${
-                  theme === "dark" ? "text-slate-300" : "text-slate-700"
-                } mb-2`}
-              >
-                Email
-              </label>
-              <input
-                type="email"
-                id="user_email"
-                name="user_email"
-                className={`w-full px-4 py-2 ${
-                  theme === "dark"
-                    ? "bg-slate-700 border-slate-600 text-slate-100"
-                    : "bg-slate-50 border-slate-300 text-slate-800"
-                } border rounded-lg focus:ring-2 focus:ring-blue-gray-500 focus:border-transparent transition-colors`}
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="message"
-                className={`block text-sm font-medium ${
-                  theme === "dark" ? "text-slate-300" : "text-slate-700"
-                } mb-2`}
-              >
-                Message
-              </label>
-              <textarea
-                id="message"
-                name="message"
-                rows={4}
-                className={`w-full px-4 py-2 ${
-                  theme === "dark"
-                    ? "bg-slate-700 border-slate-600 text-slate-100"
-                    : "bg-slate-50 border-slate-300 text-slate-800"
-                } border rounded-lg focus:ring-2 focus:ring-blue-gray-500 focus:border-transparent transition-colors`}
-                required
-              />
-            </div>
-            {submitStatus.type && (
-              <div
-                className={`text-sm ${
-                  submitStatus.type === "success"
-                    ? "text-green-500"
-                    : "text-red-500"
-                }`}
-              >
-                {submitStatus.message}
-              </div>
-            )}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`w-full px-6 py-3 ${
-                theme === "dark"
-                  ? "bg-blue-gray-600 hover:bg-blue-gray-700"
-                  : "bg-blue-gray-600 hover:bg-blue-gray-700"
-              } text-slate-50 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-blue-gray-500`}
+            <form
+              ref={formRef}
+              onSubmit={handleSubmit}
+              className="space-y-6"
             >
-              {isSubmitting ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Send className="w-5 h-5" />
+              <div className="hidden">
+                <input type="hidden" name="to_name" value="Arth Kadiya" />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="user_name"
+                  className="block text-xs font-mono-code font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2"
+                >
+                  [Name]
+                </label>
+                <input
+                  type="text"
+                  id="user_name"
+                  name="user_name"
+                  placeholder="Your Name"
+                  className="w-full px-4 py-3 rounded-lg border-3 border-slate-900 dark:border-white text-sm font-semibold transition-all focus:outline-none bg-white dark:bg-gray-900 text-slate-900 dark:text-white shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#ffffff] focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[1.5px_1.5px_0px_0px_#0f172a] dark:focus:shadow-[1.5px_1.5px_0px_0px_#ffffff]"
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="user_email"
+                  className="block text-xs font-mono-code font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2"
+                >
+                  [Email]
+                </label>
+                <input
+                  type="email"
+                  id="user_email"
+                  name="user_email"
+                  placeholder="name@example.com"
+                  className="w-full px-4 py-3 rounded-lg border-3 border-slate-900 dark:border-white text-sm font-semibold transition-all focus:outline-none bg-white dark:bg-gray-900 text-slate-900 dark:text-white shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#ffffff] focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[1.5px_1.5px_0px_0px_#0f172a] dark:focus:shadow-[1.5px_1.5px_0px_0px_#ffffff]"
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="message"
+                  className="block text-xs font-mono-code font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2"
+                >
+                  [Message]
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  rows={4}
+                  placeholder="Let me know what you'd like to collaborate on..."
+                  className="w-full px-4 py-3 rounded-lg border-3 border-slate-900 dark:border-white text-sm font-semibold transition-all focus:outline-none bg-white dark:bg-gray-900 text-slate-900 dark:text-white shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#ffffff] focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[1.5px_1.5px_0px_0px_#0f172a] dark:focus:shadow-[1.5px_1.5px_0px_0px_#ffffff]"
+                  required
+                />
+              </div>
+
+              {submitStatus.type && (
+                <div
+                  className={`text-xs font-mono-code font-bold p-3 rounded-lg border-2 ${
+                    submitStatus.type === "success"
+                      ? "bg-green-100 border-green-500 text-green-700"
+                      : "bg-red-100 border-red-500 text-red-700"
+                  }`}
+                >
+                  {submitStatus.message}
+                </div>
               )}
-              <span>Send Message</span>
-            </button>
-          </motion.form>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-3.5 rounded-lg bg-yellow-200 dark:bg-yellow-400 text-slate-900 hover:bg-yellow-350 dark:hover:bg-yellow-500 border-3 border-slate-900 dark:border-white font-bold text-xs font-mono-code uppercase tracking-wider transition-all shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#ffffff] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_#0f172a] dark:hover:shadow-[3px_3px_0px_0px_#ffffff] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0px_0px_#0f172a] dark:active:shadow-[1px_1px_0px_0px_#ffffff] flex items-center justify-center space-x-2"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                ) : (
+                  <Send className="w-4 h-4 shrink-0" />
+                )}
+                <span>Send Message</span>
+              </button>
+            </form>
+          </motion.div>
         </div>
       </div>
     </section>

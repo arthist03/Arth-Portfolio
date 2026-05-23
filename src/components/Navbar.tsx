@@ -10,7 +10,7 @@ const Navbar = () => {
   const { theme, toggleTheme, isTransitioning } = useTheme();
 
   const handleScroll = useCallback(() => {
-    setIsScrolled(window.scrollY > 50);
+    setIsScrolled(window.scrollY > 30);
   }, []);
 
   useEffect(() => {
@@ -23,7 +23,9 @@ const Navbar = () => {
   const scrollToSection = useCallback((sectionId: string) => {
     const element = document.getElementById(sectionId.toLowerCase());
     if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+      const yOffset = -90;
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: "smooth" });
       setIsMobileMenuOpen(false);
     }
   }, []);
@@ -31,143 +33,81 @@ const Navbar = () => {
   return (
     <>
       <motion.nav
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className={`fixed w-full z-50 transition-all duration-500 ${
+        initial={{ y: -100, x: "-50%" }}
+        animate={{ y: 0, x: "-50%" }}
+        className={`fixed top-4 left-1/2 z-50 w-[92%] max-w-5xl rounded-xl transition-all duration-300 border-[3px] border-slate-900 dark:border-white ${
           isScrolled
-            ? "bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-md shadow-lg border-b border-slate-200/20 dark:border-slate-700/20"
-            : "bg-transparent"
+            ? "bg-white dark:bg-gray-900 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#ffffff] py-2 px-6"
+            : "bg-white/90 dark:bg-gray-900/90 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#ffffff] py-3 px-6"
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Professional Logo */}
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex items-center space-x-3"
-            >
-              <div className="relative">
-                <a
-                  href="https://your-link-here.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
+        <div className="flex items-center justify-between">
+          {/* Logo Brand */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center space-x-3 cursor-pointer"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          >
+            <div className="relative w-9 h-9">
+              <img
+                src={AKimage}
+                alt="Arth Kadiya"
+                className="w-full h-full rounded-lg object-cover border-2 border-slate-900 dark:border-white"
+              />
+            </div>
+            <span className="font-display font-black text-base tracking-wide text-slate-900 dark:text-white uppercase">
+              Arth Kadiya
+            </span>
+          </motion.div>
+
+          {/* Desktop Links */}
+          <div className="hidden md:flex items-center space-x-6">
+            <div className="flex items-center space-x-2">
+              {navItems.map((item) => (
+                <button
+                  key={item}
+                  onClick={() => scrollToSection(item)}
+                  className="text-slate-900 dark:text-gray-100 hover:bg-yellow-250 hover:text-slate-900 dark:hover:bg-yellow-400 dark:hover:text-slate-950 px-4 py-2 text-xs font-mono-code font-bold uppercase tracking-wider transition-colors duration-250 border-2 border-transparent hover:border-slate-900 dark:hover:border-white rounded-lg"
                 >
-                  <img
-                    src={AKimage}
-                    alt="Arth Kadiya"
-                    className="w-10 h-10 rounded-full ring-2 ring-blue-gray-500/50 transition-all duration-300 hover:ring-blue-gray-600"
-                  />
-                </a>
-
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-gray-600 to-slate-700 opacity-0 hover:opacity-20 transition-opacity duration-300" />
-              </div>
-              <span className="font-bold text-lg bg-gradient-to-r from-blue-gray-700 via-slate-700 to-blue-gray-800 dark:from-blue-gray-200 dark:via-slate-100 dark:to-blue-gray-100 bg-clip-text text-transparent">
-                Arth Kadiya
-              </span>
-            </motion.div>
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
-              <div className="flex items-baseline space-x-6">
-                {navItems.map((item) => (
-                  <motion.button
-                    key={item}
-                    onClick={() => scrollToSection(item)}
-                    className="relative text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 px-3 py-2 text-sm font-medium transition-colors duration-200 group"
-                    whileHover={{ y: -2 }}
-                    whileTap={{ y: 0 }}
-                  >
-                    {item}
-                    <span className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-blue-gray-600 to-slate-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200" />
-                  </motion.button>
-                ))}
-              </div>
-
-              {/* Professional Theme Toggle */}
-              <motion.button
-                onClick={toggleTheme}
-                disabled={isTransitioning}
-                className="relative p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-300 disabled:opacity-50 border border-slate-200 dark:border-slate-700"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="Toggle theme"
-              >
-                <AnimatePresence mode="wait">
-                  {theme === "dark" ? (
-                    <motion.div
-                      key="sun"
-                      initial={{ rotate: -90, opacity: 0 }}
-                      animate={{ rotate: 0, opacity: 1 }}
-                      exit={{ rotate: 90, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Sun className="w-5 h-5" />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="moon"
-                      initial={{ rotate: 90, opacity: 0 }}
-                      animate={{ rotate: 0, opacity: 1 }}
-                      exit={{ rotate: -90, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Moon className="w-5 h-5" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.button>
+                  {item}
+                </button>
+              ))}
             </div>
+          </div>
 
-            {/* Mobile menu button */}
-            <div className="md:hidden flex items-center space-x-4">
-              <motion.button
-                onClick={toggleTheme}
-                disabled={isTransitioning}
-                className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
-                whileTap={{ scale: 0.95 }}
-              >
-                {theme === "dark" ? (
-                  <Sun className="w-5 h-5" />
-                ) : (
-                  <Moon className="w-5 h-5" />
-                )}
-              </motion.button>
-
-              <motion.button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
-                whileTap={{ scale: 0.95 }}
-              >
-                {isMobileMenuOpen ? (
-                  <X className="w-5 h-5" />
-                ) : (
-                  <Menu className="w-5 h-5" />
-                )}
-              </motion.button>
-            </div>
+          {/* Mobile Buttons */}
+          <div className="md:hidden flex items-center space-x-2">
+            <motion.button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-lg bg-white dark:bg-gray-800 text-slate-900 dark:text-white border-2 border-slate-900 dark:border-white"
+              whileTap={{ scale: 0.95 }}
+            >
+              {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </motion.button>
           </div>
         </div>
       </motion.nav>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Dropdown */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="fixed top-16 left-0 right-0 z-40 md:hidden bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/20 dark:border-slate-700/20"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+            className="fixed top-20 left-1/2 -translate-x-1/2 z-45 w-[92%] rounded-xl bg-white dark:bg-gray-900 border-[3px] border-slate-900 dark:border-white shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#ffffff] p-4 md:hidden"
           >
-            <div className="px-4 py-6 space-y-4">
+            <div className="flex flex-col space-y-1">
               {navItems.map((item, index) => (
                 <motion.button
                   key={item}
                   onClick={() => scrollToSection(item)}
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="block w-full text-left px-4 py-3 text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700"
+                  transition={{ delay: index * 0.05 }}
+                  className="w-full text-left px-5 py-3 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg font-mono-code font-bold uppercase tracking-wider transition-colors border-2 border-transparent hover:border-slate-900 dark:hover:border-white"
                 >
                   {item}
                 </motion.button>

@@ -22,73 +22,43 @@ const Hero3D = () => {
   }), []);
 
   const starsConfig = useMemo(() => ({
-    radius: 100,
-    depth: 50,
-    count: theme === 'dark' ? 5000 : 2000,
-    factor: theme === 'dark' ? 4 : 2,
+    radius: 50,
+    depth: 30,
+    count: theme === 'dark' ? 1200 : 500,
+    factor: theme === 'dark' ? 3 : 1.5,
     saturation: 0,
     fade: true,
-    speed: 0.5
+    speed: 0.3
   }), [theme]);
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
-      {/* Gradient Background */}
-      <div 
-        className={`absolute inset-0 transition-all duration-1000 ${
-          theme === 'dark' 
-            ? 'bg-gradient-to-br from-gray-900 via-blue-900/20 to-purple-900/30' 
-            : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
-        }`}
-      />
-
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={i}
-            className={`absolute rounded-full opacity-20 animate-pulse ${
-              theme === 'dark' ? 'bg-blue-400' : 'bg-blue-600'
-            }`}
-            style={{
-              width: Math.random() * 100 + 50,
-              height: Math.random() * 100 + 50,
-              left: Math.random() * 100 + '%',
-              top: Math.random() * 100 + '%',
-              animationDelay: Math.random() * 3 + 's',
-              animationDuration: Math.random() * 4 + 3 + 's'
-            }}
-          />
-        ))}
-      </div>
-
+    <div className="relative w-full h-full min-h-[320px] md:min-h-[450px] overflow-hidden">
       {/* 3D Canvas */}
       <div className="relative h-full w-full z-10">
         <Suspense fallback={<LoadingSpinner />}>
           <Canvas {...canvasConfig}>
-            <color attach="background" args={['transparent']} />
             
             {/* Optimized lighting */}
-            <ambientLight intensity={theme === 'dark' ? 0.3 : 0.6} />
+            <ambientLight intensity={theme === 'dark' ? 0.4 : 0.7} />
             <directionalLight 
               position={[10, 10, 5]} 
-              intensity={theme === 'dark' ? 0.8 : 1.2}
-              color={theme === 'dark' ? '#4299e1' : '#3182ce'}
+              intensity={theme === 'dark' ? 1.0 : 1.4}
+              color={theme === 'dark' ? '#818cf8' : '#4f46e5'}
               castShadow
-              shadow-mapSize-width={1024}
-              shadow-mapSize-height={1024}
+              shadow-mapSize-width={512}
+              shadow-mapSize-height={512}
             />
             <pointLight 
               position={[-10, -10, -5]} 
-              intensity={0.3}
-              color={theme === 'dark' ? '#9f7aea' : '#805ad5'}
+              intensity={0.4}
+              color={theme === 'dark' ? '#c084fc' : '#9333ea'}
             />
 
             {/* Stars background */}
             <Stars {...starsConfig} />
 
             {/* Floating 3D elements */}
-            <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
+            <Float speed={1.2} rotationIntensity={0.4} floatIntensity={0.4}>
               <DeskScene />
             </Float>
 
@@ -99,22 +69,12 @@ const Hero3D = () => {
               maxPolarAngle={Math.PI / 2}
               minPolarAngle={Math.PI / 3}
               autoRotate
-              autoRotateSpeed={0.5}
+              autoRotateSpeed={0.6}
               dampingFactor={0.05}
               enableDamping
             />
           </Canvas>
         </Suspense>
-      </div>
-
-      {/* Scroll indicator */}
-      <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 text-center z-20">
-        <div className={`animate-bounce ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-          <div className="w-6 h-10 border-2 border-current rounded-full mx-auto mb-2">
-            <div className={`w-1 h-3 ${theme === 'dark' ? 'bg-gray-300' : 'bg-gray-600'} rounded-full mx-auto animate-pulse`} />
-          </div>
-          <p className="text-sm font-medium">Scroll to explore</p>
-        </div>
       </div>
     </div>
   );

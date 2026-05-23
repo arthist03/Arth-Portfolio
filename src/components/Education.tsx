@@ -17,6 +17,8 @@ const Education = () => {
       image:
         "https://tse1.mm.bing.net/th/id/OIP.vIyTNgAeQ7rEqDqLAWt0LgHaEi?r=0&rs=1&pid=ImgDetMain&o=7&rm=3",
       link: "https://iitj.ac.in/",
+      gridClass: "md:col-span-2 bg-amber-50 dark:bg-[#1a1c24]",
+      accentColor: "bg-yellow-200 text-slate-900"
     },
     {
       degree: "B.Tech in Biomedical Engineering",
@@ -27,6 +29,8 @@ const Education = () => {
       image:
         "https://media.getmyuni.com/azure/college-image/big/manipal-institute-of-technology-mit-manipal.jpg",
       link: "https://www.manipal.edu/mit.html",
+      gridClass: "md:col-span-1 bg-blue-50 dark:bg-[#151c2a]",
+      accentColor: "bg-blue-200 text-slate-900"
     },
     {
       degree: "Diploma in Biomedical Engineering",
@@ -36,6 +40,8 @@ const Education = () => {
         "My diploma in biomedical engineering from Ganpat University gave me a strong foundation in engineering, biology, and medicine, preparing me to enhance patient care, develop assistive tech, and evaluate medical therapies.",
       image: "https://i.ytimg.com/vi/OsoXEo1wpYI/maxresdefault.jpg",
       link: "https://www.ganpatuniversity.ac.in/",
+      gridClass: "md:col-span-1 bg-emerald-50 dark:bg-[#13221a]",
+      accentColor: "bg-emerald-200 text-slate-900"
     },
   ];
 
@@ -45,100 +51,95 @@ const Education = () => {
 
   return (
     <section
-      className="py-20 bg-slate-100 dark:bg-slate-800 transition-colors duration-300"
+      className="py-24 bg-[#fbfaf5] dark:bg-[#0d0e12] border-t-3 border-slate-900 dark:border-slate-800 transition-colors duration-300"
       id="education"
     >
-      <div className="max-w-6xl mx-auto px-4">
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-blue-gray-700 via-slate-700 to-blue-gray-800 dark:from-blue-gray-200 dark:via-slate-100 dark:to-blue-gray-100 bg-clip-text text-transparent"
-        >
-          Education
-        </motion.h2>
-        <div className="space-y-8">
+      <div className="max-w-5xl mx-auto px-4">
+        
+        <div className="text-center mb-16">
+          <span className="text-xs font-mono-code font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            [JOURNEY]
+          </span>
+          <h2 className="text-4xl font-display font-black text-slate-900 dark:text-white uppercase mt-2">
+            Academic Background
+          </h2>
+          <div className="w-16 h-1.5 bg-slate-900 dark:bg-white mx-auto mt-4" />
+        </div>
+
+        {/* Bento Grid layout for Education */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {education.map((edu, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="relative group"
+              initial={{ opacity: 0, y: 25 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05, duration: 0.4 }}
+              className={`relative group neobrutal-card p-8 flex flex-col justify-between ${edu.gridClass}`}
               onMouseEnter={() => handleHover(index)}
               onMouseLeave={() => handleHover(null)}
             >
+              {/* Institution Image Hover Reveal */}
               <AnimatePresence>
                 {hoveredSchool === index && (
                   <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 -z-10 overflow-hidden rounded-lg"
+                    initial={{ opacity: 0, scale: 0.99 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.99 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute inset-0 z-0 overflow-hidden rounded-xl border-2 border-transparent"
                   >
-                    <div
-                      className={`absolute inset-0 ${
-                        theme === "dark" ? "bg-slate-900/80" : "bg-slate-50/90"
-                      } backdrop-blur-sm`}
-                    />
                     <img
                       src={edu.image}
                       alt={edu.institution}
-                      className="w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-cover transform scale-102 z-0"
                       loading="lazy"
+                    />
+                    <div
+                      className="absolute inset-0 z-10 transition-all duration-300"
+                      style={{ backgroundColor: "rgba(15, 23, 42, 0.85)" }}
                     />
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              <div
-                className={`rounded-lg p-6 shadow-xl transition-all duration-300 ${
-                  theme === "dark"
-                    ? "bg-slate-900/90 backdrop-blur-sm hover:bg-slate-900/95 border border-slate-700"
-                    : "bg-slate-50/90 backdrop-blur-sm hover:bg-slate-50/95 border border-slate-200"
-                }`}
-              >
-                <div className="flex items-start gap-4">
-                  <div
-                    className={`p-3 rounded-full transition-colors ${
-                      theme === "dark"
-                        ? "bg-blue-gray-600/20 group-hover:bg-blue-gray-600/30"
-                        : "bg-blue-gray-100 group-hover:bg-blue-gray-200"
-                    }`}
-                  >
-                    <GraduationCap
-                      className={`w-6 h-6 ${
-                        theme === "dark"
-                          ? "text-blue-gray-400"
-                          : "text-blue-gray-600"
-                      }`}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <h3 className="text-xl font-semibold mb-2 text-slate-800 dark:text-slate-100">
+              <div className="w-full relative z-20">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex gap-4 items-start">
+                    {/* Grad Icon Wrapper */}
+                    <div
+                      className={`p-3 rounded-lg border-2 border-slate-900 dark:border-white shrink-0 ${edu.accentColor}`}
+                    >
+                      <GraduationCap className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-display font-black text-slate-900 dark:text-white group-hover:text-white transition-colors duration-300 uppercase leading-snug">
                         {edu.degree}
                       </h3>
-                      <a
-                        href={edu.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-gray-600 dark:text-blue-gray-400 hover:text-blue-gray-700 dark:hover:text-blue-gray-300 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <ExternalLink className="w-5 h-5" />
-                      </a>
+                      <p className="text-slate-700 dark:text-slate-350 group-hover:text-slate-200 transition-colors duration-300 font-bold text-sm mt-1">
+                        {edu.institution}
+                      </p>
                     </div>
-                    <p className="text-slate-600 dark:text-slate-400 mb-2">
-                      {edu.institution}
-                    </p>
-                    <div className="flex items-center text-slate-500 dark:text-slate-400 mb-2">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      <span>{edu.year}</span>
-                    </div>
-                    <p className="text-slate-700 dark:text-slate-300">
-                      {edu.description}
-                    </p>
                   </div>
+
+                  <a
+                    href={edu.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2.5 rounded-lg border-2 border-slate-900 dark:border-white bg-white dark:bg-gray-800 text-slate-900 dark:text-white shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#ffffff] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_0px_#0f172a] dark:hover:shadow-[1px_1px_0px_0px_#ffffff] transition-all opacity-0 group-hover:opacity-100 shrink-0"
+                    aria-label={`Visit webpage of ${edu.institution}`}
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
                 </div>
+
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 border-2 border-slate-900 dark:border-white bg-white dark:bg-gray-900 text-xs font-mono-code font-bold uppercase text-slate-900 dark:text-white shadow-[1.5px_1.5px_0px_0px_#0f172a] dark:shadow-[1.5px_1.5px_0px_0px_#ffffff] mt-5 mb-4">
+                  <Calendar className="w-3.5 h-3.5 mr-0.5" />
+                  <span>{edu.year}</span>
+                </div>
+
+                <p className="text-slate-750 dark:text-gray-250 group-hover:text-slate-100 transition-colors duration-300 text-sm font-semibold leading-relaxed">
+                  {edu.description}
+                </p>
               </div>
             </motion.div>
           ))}
