@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import Education from "./components/Education";
 import Experience from "./components/Experience";
 import ProjectCard from "./components/ProjectCard";
@@ -8,6 +8,7 @@ import Navbar from "./components/Navbar";
 import Hero3D from "./components/Hero3D";
 import CursorEffect from "./components/CursorEffect";
 import { ThemeProvider } from "./components/ThemeContext";
+import ByteRun from "./components/ByteRun";
 import { 
   Brain, Cpu, Network, Zap, Database, 
   Github, Linkedin, Mail, ArrowUpRight, 
@@ -15,14 +16,13 @@ import {
   ExternalLink, BarChart3
 } from "lucide-react";
 import ArthPP from '/Icon/pp.jpg';
-import SplashScreen from "./components/SplashScreen";
 
 const DecryptText: React.FC<{
   text: string;
-  trigger: boolean;
+  trigger?: boolean;
   delay?: number;
   speed?: number;
-}> = ({ text, trigger, delay = 0, speed = 25 }) => {
+}> = ({ text, trigger = true, delay = 0, speed = 25 }) => {
   const [displayText, setDisplayText] = useState(text);
 
   useEffect(() => {
@@ -80,27 +80,9 @@ const DecryptText: React.FC<{
 function App() {
   const { scrollYProgress } = useScroll();
   const [activeFilter, setActiveFilter] = useState("ALL");
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (isLoading) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isLoading]);
 
   return (
     <ThemeProvider>
-      <AnimatePresence>
-        {isLoading && (
-          <SplashScreen onComplete={() => setIsLoading(false)} />
-        )}
-      </AnimatePresence>
-
       <div className="min-h-screen bg-[#fbfaf5] dark:bg-[#0d0e12] text-slate-900 dark:text-slate-100 transition-all duration-300 relative neo-grid-overlay">
         
         <CursorEffect />
@@ -110,41 +92,41 @@ function App() {
         <main className="max-w-6xl mx-auto px-4 pt-28 pb-16">
           
           {/* Header Area */}
-          <div className="mb-10 text-center md:text-left">
+          <div className="mb-8 sm:mb-10 text-center md:text-left">
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 border-3 border-slate-900 dark:border-white bg-yellow-250 dark:bg-yellow-400 text-slate-900 font-mono-code text-[11px] font-black uppercase tracking-wider mb-4 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#ffffff]"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 border-3 border-slate-900 dark:border-white bg-yellow-250 dark:bg-yellow-400 text-slate-900 font-mono-code text-[10px] sm:text-[11px] font-black uppercase tracking-wider mb-4 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#ffffff]"
             >
-              [<DecryptText text="AI/ML & Biomedical Innovation" trigger={!isLoading} delay={300} />]
+              [<DecryptText text="AI/ML & Biomedical Engineering" trigger={true} delay={300} />]
             </motion.div>
             <motion.h1 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.1 }}
-              className="text-4xl md:text-5.5xl font-display font-black tracking-tight uppercase"
+              className="text-3xl sm:text-4xl md:text-5.5xl font-display font-black tracking-tight uppercase break-words leading-tight"
             >
-              <DecryptText text="Machine Intelligence & " trigger={!isLoading} delay={700} />
-              <span className="bg-yellow-200 dark:bg-yellow-450 px-2 py-0.5 border-2 border-slate-900 dark:border-white text-slate-900 dark:text-white shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#ffffff]">
-                <DecryptText text="Bio-Med" trigger={!isLoading} delay={1100} />
+              <DecryptText text="Machine Learning & " trigger={true} delay={700} />
+              <span className="bg-yellow-200 dark:bg-yellow-450 px-2 py-0.5 border-2 border-slate-900 dark:border-white text-slate-900 dark:text-white shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#ffffff] inline-block mt-1 sm:mt-0">
+                <DecryptText text="Bio-Med" trigger={true} delay={1100} />
               </span>
             </motion.h1>
           </div>
 
           {/* Grid Layout (5 Rows total on Desktop) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-auto md:auto-rows-[225px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 auto-rows-auto md:auto-rows-[225px]">
             
             {/* ROW 1 & 2 (LEFT): Main Hero Profile Card */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4 }}
-              className="neobrutal-card p-8 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 md:row-span-2 bg-amber-50 dark:bg-[#1a1c24] min-h-[280px] md:min-h-0 group hover:bg-amber-100/50 dark:hover:bg-[#1f212c] transition-all duration-300"
+              className="neobrutal-card p-5 sm:p-6 md:p-8 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 md:row-span-2 bg-amber-50 dark:bg-[#1a1c24] min-h-[280px] md:min-h-0 group hover:bg-amber-100/50 dark:hover:bg-[#1f212c] transition-all duration-300"
             >
-              <div className="flex flex-col md:flex-row md:items-center gap-6">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start md:items-center gap-4 sm:gap-6 text-center sm:text-left">
                 {/* Profile Picture */}
-                <div className="relative w-28 h-28 md:w-32 md:h-32 shrink-0">
+                <div className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 shrink-0">
                   <div className="w-full h-full rounded-xl overflow-hidden border-[3px] border-slate-900 dark:border-white bg-slate-900 dark:bg-white shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#ffffff] group-hover:scale-105 group-hover:rotate-[-2deg] transition-all duration-300">
                     <img 
                       src={ArthPP} 
@@ -159,13 +141,13 @@ function App() {
                 </div>
                 {/* Title */}
                 <div>
-                  <h2 className="text-3xl font-display font-black tracking-tight text-slate-900 dark:text-white uppercase">
-                    <DecryptText text="Arth Kadiya" trigger={!isLoading} delay={900} />
+                  <h2 className="text-2xl sm:text-3xl font-display font-black tracking-tight text-slate-900 dark:text-white uppercase">
+                    <DecryptText text="Arth Kadiya" trigger={true} delay={900} />
                   </h2>
-                  <p className="text-sm font-mono-code font-bold uppercase text-indigo-650 dark:text-indigo-400 mt-1">
+                  <p className="text-xs sm:text-sm font-mono-code font-bold uppercase text-indigo-650 dark:text-indigo-400 mt-1">
                     AI/ML & Biomedical Engineer
                   </p>
-                  <p className="text-xs font-bold text-slate-650 dark:text-slate-400 flex items-center gap-1.5 mt-2.5">
+                  <p className="text-xs font-bold text-slate-650 dark:text-slate-400 flex items-center justify-center sm:justify-start gap-1.5 mt-2.5">
                     <MapPin className="w-4 h-4 text-slate-900 dark:text-white shrink-0 group-hover:-translate-y-0.5 transition-transform duration-300" />
                     IIT Jodhpur & AIIMS Jodhpur
                   </p>
@@ -174,12 +156,12 @@ function App() {
 
               <div className="mt-5 mb-2">
                 <p className="text-slate-800 dark:text-gray-250 leading-relaxed text-sm md:text-base font-semibold">
-                  Engineering high-impact solutions from concept to real-world deployment. I build scalable machine intelligence, robust hardware, and assistive diagnostics designed to solve hard clinical problems.
+                  I work at the intersection of machine learning and biomedical engineering, developing diagnostic software, computer vision tools, and medical device hardware for clinical applications.
                 </p>
               </div>
 
               <div className="pt-3 border-t-2 border-slate-900 dark:border-slate-850 flex items-center justify-between text-[11px] font-mono-code font-bold text-slate-500 uppercase">
-                <span>// Available for clinical engineering</span>
+                <span>// Open to engineering & research roles</span>
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse border border-slate-900" />
               </div>
             </motion.div>
@@ -189,7 +171,7 @@ function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.1 }}
-              className="neobrutal-card p-6 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 md:row-span-2 bg-emerald-50 dark:bg-[#13221a] min-h-[280px] md:min-h-0"
+              className="neobrutal-card p-5 sm:p-6 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 md:row-span-2 bg-emerald-50 dark:bg-[#13221a] min-h-[260px] md:min-h-0"
             >
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -232,7 +214,7 @@ function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.15 }}
-              className="neobrutal-card p-6 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 bg-blue-50 dark:bg-[#151c2a]"
+              className="neobrutal-card p-5 sm:p-6 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 bg-blue-50 dark:bg-[#151c2a]"
             >
               <div className="flex items-center justify-between">
                 <h3 className="font-display font-black text-base text-slate-900 dark:text-white uppercase">
@@ -255,7 +237,7 @@ function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.2 }}
-              className="neobrutal-card p-6 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 bg-orange-50 dark:bg-[#241a15]"
+              className="neobrutal-card p-5 sm:p-6 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 bg-orange-50 dark:bg-[#241a15]"
             >
               <div className="flex items-center justify-between">
                 <h3 className="font-display font-black text-base text-slate-900 dark:text-white uppercase">
@@ -265,7 +247,7 @@ function App() {
               </div>
               <div className="mt-2 space-y-1">
                 <p className="text-sm font-bold text-slate-900 dark:text-white">
-                  M.Tech in Medical Technologies
+                  Masters in Medical Technologies
                 </p>
                 <p className="text-xs font-mono-code text-slate-650 dark:text-slate-400">
                   Joint Program by IIT Jodhpur and AIIMS Jodhpur (2025-27)
@@ -301,16 +283,16 @@ function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.3 }}
-              className="neobrutal-card p-6 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 bg-purple-50 dark:bg-[#20182c]"
+              className="neobrutal-card p-5 sm:p-6 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 bg-purple-50 dark:bg-[#20182c]"
             >
               <div className="flex items-center justify-between">
                 <h3 className="font-display font-black text-base text-slate-900 dark:text-white uppercase">
-                  MedTech Mission
+                  Technical Focus
                 </h3>
                 <Cpu className="w-5 h-5 text-purple-650 dark:text-purple-400 shrink-0" />
               </div>
               <p className="text-sm font-semibold text-slate-805 dark:text-gray-250 leading-relaxed mt-2">
-                "Democratizing healthcare by designing advanced, affordable medical hardware and assistive diagnostics that empower doctors to make faster, more accurate decisions." Focused heavily on bridging physical biomedical devices with computational tools.
+                Developing reliable medical hardware, assistive diagnostics, and practical machine learning systems for clinical settings. My work centers on medical robotics, image classification, and embedded biosignal processing.
               </p>
             </motion.div>
 
@@ -319,7 +301,7 @@ function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.35 }}
-              className="neobrutal-card p-6 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 bg-sky-50 dark:bg-[#1a2333]"
+              className="neobrutal-card p-5 sm:p-6 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 bg-sky-50 dark:bg-[#1a2333]"
             >
               <div className="flex items-center justify-between">
                 <h3 className="font-display font-black text-base text-slate-900 dark:text-white uppercase">
@@ -332,7 +314,7 @@ function App() {
               <div className="grid grid-cols-3 gap-2 text-center my-2">
                 <div className="p-2 border-2 border-slate-900 bg-white dark:bg-gray-800 rounded-lg shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                   <p className="text-sm font-black text-indigo-600">4</p>
-                  <p className="text-[9px] font-mono-code font-bold uppercase text-slate-500">Interns</p>
+                  <p className="text-[9px] font-mono-code font-bold uppercase text-slate-500">Roles</p>
                 </div>
                 <div className="p-2 border-2 border-slate-900 bg-white dark:bg-gray-800 rounded-lg shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                   <p className="text-sm font-black text-purple-650">30+</p>
@@ -375,6 +357,9 @@ function App() {
             </motion.div>
 
           </div>
+
+          {/* Byte Run Mini Pac-Man Game Widget */}
+          <ByteRun />
         </main>
 
         {/* Detailed Timeline Sections */}
@@ -416,9 +401,9 @@ function App() {
 
 const projects = [
   {
-    title: "Preterm Pregnancy Prediction using ML",
+    title: "Preterm Pregnancy Risk Prediction",
     description:
-      "Developed an advanced machine learning system using ensemble methods to predict preterm pregnancy risk. Implemented feature engineering on maternal health data and achieved 94% accuracy using Random Forest and SVM models.",
+      "A clinical risk assessment model evaluating maternal physiological parameters with Random Forest and Support Vector Machine classifiers, incorporating structured feature engineering to identify key risk indicators.",
     image:
       "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=500&h=300&fit=crop",
     tags: ["Python", "Scikit-learn", "Random Forest", "SVM"],
@@ -426,19 +411,19 @@ const projects = [
     categories: ["MEDICAL AI"]
   },
   {
-    title: "Real-time Hand Gesture Recognition",
+    title: "Real-Time Hand Gesture Classification",
     description:
-      "Built a computer vision system using MediaPipe and OpenCV for real-time hand gesture classification. Implemented custom CNN architecture achieving 98% accuracy on gesture recognition tasks.",
+      "A computer vision pipeline combining MediaPipe skeletal hand tracking with OpenCV and a convolutional neural network for responsive real-time gesture identification.",
     image:
       "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=500&h=300&fit=crop",
-    tags: ["Python", "OpenCV", "MediaPipe", "CNN", "Computer Vision"],
+    tags: ["Python", "OpenCV", "MediaPipe", "CNN"],
     link: "#",
     categories: ["COMPUTER VISION", "DEEP LEARNING"]
   },
   {
-    title: "Customer Churn Prediction with Deep Learning",
+    title: "Customer Churn Prediction Network",
     description:
-      "Developed a neural network model for customer churn prediction using TensorFlow. Implemented feature engineering and achieved 85% accuracy with interactive visualizations for business insights.",
+      "A deep neural network implemented in TensorFlow for customer retention modeling, featuring categorical feature pipelines, training diagnostic curves, and performance evaluation metrics.",
     image:
       "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=500&h=300&fit=crop",
     tags: ["Python", "TensorFlow", "Neural Networks", "Data Science"],
@@ -446,9 +431,9 @@ const projects = [
     categories: ["DEEP LEARNING"]
   },
   {
-    title: "AI-Powered Eye Care Application",
+    title: "AI-Assisted Ophthalmic Care App",
     description:
-      "Created an intelligent mobile application for ophthalmology workflow optimization. Integrated machine learning models for automated diagnosis assistance and patient data management.",
+      "An Android application built with Kotlin and Firebase integrating TensorFlow Lite on-device models for automated retinal image screening and patient record management.",
     image:
       "https://plus.unsplash.com/premium_photo-1722653260560-f96ad79df08b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fG9waHRoYWxtb3xlbnwwfHwwfHx8MA%3D%3D",
     tags: ["Kotlin", "Firebase", "TensorFlow Lite", "Medical AI"],
@@ -456,22 +441,22 @@ const projects = [
     categories: ["MEDICAL AI", "DEEP LEARNING"]
   },
   {
-    title: "Magic ML",
+    title: "Magic ML Model Visualization",
     description:
-      "Interactive web application for visualizing data and training processes. Built with python for educational purposes in AI/ML learning.",
+      "An educational Python dashboard for visualizing machine learning training dynamics, decision surfaces, and evaluation metrics across fundamental algorithms.",
     image:
       "https://images.unsplash.com/photo-1672922310200-fff31138251e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjZ8fE1MfGVufDB8fDB8fHww&fit=crop",
     tags: ["Python", "Machine Learning", "EDA", "Visualization"],
-    link: "https://github.com/arthist03/Magic-ML  ",
+    link: "https://github.com/arthist03/Magic-ML",
     categories: ["DEEP LEARNING"]
   },
   {
-    title: "More AI/ML Projects",
+    title: "Additional Engineering Repositories",
     description:
-      "Explore my complete portfolio of artificial intelligence and machine learning projects on GitHub, including computer vision, NLP, and medical AI applications.",
+      "Explore open-source implementations on GitHub covering biomedical signal analysis, embedded firmware, computer vision, and applied machine learning research.",
     image:
       "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=500&h=300&fit=crop",
-    tags: ["AI/ML", "Deep Learning", "Computer Vision", "Medical AI"],
+    tags: ["AI/ML", "Computer Vision", "Biomedical Systems", "Firmware"],
     link: "https://github.com/arthist03",
     categories: ["MEDICAL AI", "COMPUTER VISION", "DEEP LEARNING"]
   },

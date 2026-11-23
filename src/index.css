@@ -22,8 +22,8 @@ body {
   overflow-x: hidden;
   background-color: #fbfaf5; /* Clean Neo-brutalist Sand/Vanilla */
   color: #0f172a;
-  cursor: none;
   transition: background-color 0.4s ease, color 0.4s ease;
+  -webkit-font-smoothing: antialiased;
 }
 
 body.dark {
@@ -31,15 +31,26 @@ body.dark {
   color: #f3f4f6;
 }
 
-/* Cursor customizations */
-body *:not(nav *) {
-  cursor: none !important;
+/* Custom Cursor: ONLY on desktop devices with fine pointer (mouse/trackpad) */
+@media (hover: hover) and (pointer: fine) {
+  body {
+    cursor: none;
+  }
+  body *:not(nav *) {
+    cursor: none !important;
+  }
+  nav, nav * {
+    cursor: auto !important;
+  }
+  nav a, nav button {
+    cursor: pointer !important;
+  }
 }
-nav, nav * {
-  cursor: auto !important;
-}
-nav a, nav button {
-  cursor: pointer !important;
+
+@media (pointer: coarse) {
+  body, body * {
+    cursor: auto !important;
+  }
 }
 
 /* Monospace helpers */
@@ -83,49 +94,25 @@ nav a, nav button {
   box-shadow: 6px 6px 0px 0px #ffffff;
 }
 
-/* Hover effect: lifts card up and increases shadow depth */
-.neobrutal-card:hover {
-  transform: translate(-3px, -3px);
-  box-shadow: 9px 9px 0px 0px #0f172a;
-}
+/* Hover effect: only on devices that support hover */
+@media (hover: hover) {
+  .neobrutal-card:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 9px 9px 0px 0px #0f172a;
+  }
 
-.dark .neobrutal-card:hover {
-  box-shadow: 9px 9px 0px 0px #ffffff;
-}
+  .dark .neobrutal-card:hover {
+    box-shadow: 9px 9px 0px 0px #ffffff;
+  }
 
-/* Active effect: presses card down */
-.neobrutal-card:active {
-  transform: translate(3px, 3px);
-  box-shadow: 3px 3px 0px 0px #0f172a;
-}
+  .neobrutal-btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px 0px #0f172a;
+  }
 
-.dark .neobrutal-card:active {
-  box-shadow: 3px 3px 0px 0px #ffffff;
-}
-
-/* Neo-Brutalist Buttons */
-.neobrutal-btn {
-  background-color: #6366f1; /* Primary brand */
-  color: #ffffff;
-  border: 3px solid #0f172a;
-  box-shadow: 4px 4px 0px 0px #0f172a;
-  border-radius: 12px;
-  font-weight: 700;
-  transition: all 0.2s ease;
-}
-
-.dark .neobrutal-btn {
-  border: 3px solid #ffffff;
-  box-shadow: 4px 4px 0px 0px #ffffff;
-}
-
-.neobrutal-btn:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px 0px #0f172a;
-}
-
-.dark .neobrutal-btn:hover {
-  box-shadow: 6px 6px 0px 0px #ffffff;
+  .dark .neobrutal-btn:hover {
+    box-shadow: 6px 6px 0px 0px #ffffff;
+  }
 }
 
 .neobrutal-btn:active {

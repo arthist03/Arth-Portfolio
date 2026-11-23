@@ -89,31 +89,40 @@ const Navbar = () => {
         </div>
       </motion.nav>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Menu Backdrop & Dropdown */}
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-            className="fixed top-20 left-1/2 -translate-x-1/2 z-45 w-[92%] rounded-xl bg-white dark:bg-gray-900 border-[3px] border-slate-900 dark:border-white shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#ffffff] p-4 md:hidden"
-          >
-            <div className="flex flex-col space-y-1">
-              {navItems.map((item, index) => (
-                <motion.button
-                  key={item}
-                  onClick={() => scrollToSection(item)}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="w-full text-left px-5 py-3 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg font-mono-code font-bold uppercase tracking-wider transition-colors border-2 border-transparent hover:border-slate-900 dark:hover:border-white"
-                >
-                  {item}
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-slate-950/40 dark:bg-black/60 backdrop-blur-[2px] z-40 md:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: -20, x: "-50%" }}
+              animate={{ opacity: 1, y: 0, x: "-50%" }}
+              exit={{ opacity: 0, y: -20, x: "-50%" }}
+              transition={{ duration: 0.2 }}
+              className="fixed top-20 left-1/2 z-50 w-[92%] max-w-sm rounded-xl bg-white dark:bg-gray-900 border-[3px] border-slate-900 dark:border-white shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#ffffff] p-4 md:hidden"
+            >
+              <div className="flex flex-col space-y-1">
+                {navItems.map((item, index) => (
+                  <motion.button
+                    key={item}
+                    onClick={() => scrollToSection(item)}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="w-full text-left px-5 py-3 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg font-mono-code font-bold uppercase tracking-wider transition-colors border-2 border-transparent hover:border-slate-900 dark:hover:border-white touch-manipulation active:scale-[0.98]"
+                  >
+                    {item}
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>

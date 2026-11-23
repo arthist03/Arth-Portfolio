@@ -70,10 +70,10 @@ const Contact = () => {
             className="lg:col-span-2 space-y-6"
           >
             <h3 className="text-2xl font-display font-black text-slate-900 dark:text-white uppercase">
-              Reach Out Directly
+              Get in Touch
             </h3>
             <p className="text-slate-800 dark:text-gray-250 text-sm font-semibold leading-relaxed">
-              I'm always excited to collaborate on innovative projects that combine clinical healthcare and technology. Whether you have a project in mind, research questions, or just want to connect, feel free to drop a message!
+              Open to discussions regarding clinical engineering, research collaborations, medical device development, or technical roles. Send a message below or connect directly via email and LinkedIn.
             </p>
             
             <div className="pt-4 space-y-4">
@@ -115,7 +115,7 @@ const Contact = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="neobrutal-card p-8 bg-white dark:bg-[#16171d] lg:col-span-3 w-full"
+            className="neobrutal-card p-5 sm:p-8 bg-white dark:bg-[#16171d] lg:col-span-3 w-full"
           >
             <form
               ref={formRef}

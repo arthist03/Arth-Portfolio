@@ -9,11 +9,11 @@ const Education = () => {
 
   const education = [
     {
-      degree: "M.Tech in Medical Technologies",
+      degree: "Masters in Medical Technologies",
       institution: "Indian Institute of Technology Jodhpur, Rajasthan, India",
       year: "2025–2027",
       description:
-        "Pursuing an M.Tech in Medical Technologies, a joint program by IIT Jodhpur and AIIMS Jodhpur, I focus on innovating advanced healthcare solutions by integrating engineering excellence with clinical expertise.",
+        "Joint program between IIT Jodhpur and AIIMS Jodhpur focusing on medical device development, clinical diagnostics, and the application of machine learning to healthcare challenges.",
       image:
         "https://tse1.mm.bing.net/th/id/OIP.vIyTNgAeQ7rEqDqLAWt0LgHaEi?r=0&rs=1&pid=ImgDetMain&o=7&rm=3",
       link: "https://iitj.ac.in/",
@@ -25,7 +25,7 @@ const Education = () => {
       institution: "Manipal Institute of Technology, Manipal, Karnataka, India",
       year: "2022-2025",
       description:
-        "As a B.Tech biomedical engineering student at MIT Manipal, Karnataka, I benefit from top-tier education, cutting-edge research facilities, and strong industry connections in India's tech hub, equipping me to make a meaningful impact in biomedical engineering.",
+        "Undergraduate engineering curriculum emphasizing medical instrumentation, biosignal acquisition, biomechanics, and clinical engineering systems.",
       image:
         "https://media.getmyuni.com/azure/college-image/big/manipal-institute-of-technology-mit-manipal.jpg",
       link: "https://www.manipal.edu/mit.html",
@@ -37,7 +37,7 @@ const Education = () => {
       institution: "Ganpat University, Mehsana, Gujarat, India",
       year: "2019-2022",
       description:
-        "My diploma in biomedical engineering from Ganpat University gave me a strong foundation in engineering, biology, and medicine, preparing me to enhance patient care, develop assistive tech, and evaluate medical therapies.",
+        "Foundational studies in analog and digital electronics, biomedical equipment maintenance, circuit analysis, and diagnostic hardware testing.",
       image: "https://i.ytimg.com/vi/OsoXEo1wpYI/maxresdefault.jpg",
       link: "https://www.ganpatuniversity.ac.in/",
       gridClass: "md:col-span-1 bg-emerald-50 dark:bg-[#13221a]",
@@ -74,7 +74,7 @@ const Education = () => {
               initial={{ opacity: 0, y: 25 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05, duration: 0.4 }}
-              className={`relative group neobrutal-card p-8 flex flex-col justify-between ${edu.gridClass}`}
+              className={`relative group neobrutal-card p-5 sm:p-8 flex flex-col justify-between ${edu.gridClass}`}
               onMouseEnter={() => handleHover(index)}
               onMouseLeave={() => handleHover(null)}
             >
