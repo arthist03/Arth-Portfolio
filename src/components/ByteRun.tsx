@@ -147,39 +147,44 @@ function getBfsDistance(start: Point, end: Point, maze: number[][]): number {
   return 999;
 }
 
-// Validated random spawn points with minimum 5-tile ghost separation
-function generateSpawns(maze: number[][]): { player: Point; ghost1: Point; ghost2: Point } {
+// Validated random spawn points with minimum 4-tile ghost separation in classic corners
+function generateSpawns(maze: number[][]): {
+  player: Point;
+  blinky: Point;
+  pinky: Point;
+  inky: Point;
+  clyde: Point;
+} {
   const walkable = getWalkableCells(maze);
-  const MIN_PLAYER_GHOST_DIST = 5;
-  const MIN_GHOST_GHOST_DIST = 3;
-
   const centerCandidates = [{ r: 4, c: 4 }, { r: 4, c: 3 }, { r: 4, c: 5 }, { r: 3, c: 4 }, { r: 5, c: 4 }]
     .filter((p) => maze[p.r][p.c] !== 1);
   const playerSpawn = centerCandidates.length > 0 ? centerCandidates[0] : walkable[0];
 
-  const validGhost1s = walkable.filter(
-    (cell) =>
-      !(cell.r === playerSpawn.r && cell.c === playerSpawn.c) &&
-      getBfsDistance(playerSpawn, cell, maze) >= MIN_PLAYER_GHOST_DIST
+  // Blinky: Top-right quadrant
+  const blinkyList = walkable.filter(
+    (p) => p.r <= 3 && p.c >= 5 && getBfsDistance(playerSpawn, p, maze) >= 4
   );
+  const blinky = blinkyList.length > 0 ? blinkyList[Math.floor(Math.random() * blinkyList.length)] : { r: 1, c: 7 };
 
-  const g1 = validGhost1s.length > 0
-    ? validGhost1s[Math.floor(Math.random() * validGhost1s.length)]
-    : { r: 1, c: 1 };
-
-  const validGhost2s = walkable.filter(
-    (cell) =>
-      !(cell.r === playerSpawn.r && cell.c === playerSpawn.c) &&
-      !(cell.r === g1.r && cell.c === g1.c) &&
-      getBfsDistance(playerSpawn, cell, maze) >= MIN_PLAYER_GHOST_DIST &&
-      getBfsDistance(g1, cell, maze) >= MIN_GHOST_GHOST_DIST
+  // Pinky: Top-left quadrant
+  const pinkyList = walkable.filter(
+    (p) => p.r <= 3 && p.c <= 3 && !(p.r === blinky.r && p.c === blinky.c) && getBfsDistance(playerSpawn, p, maze) >= 4
   );
+  const pinky = pinkyList.length > 0 ? pinkyList[Math.floor(Math.random() * pinkyList.length)] : { r: 1, c: 1 };
 
-  const g2 = validGhost2s.length > 0
-    ? validGhost2s[Math.floor(Math.random() * validGhost2s.length)]
-    : { r: 7, c: 7 };
+  // Inky: Bottom-right quadrant
+  const inkyList = walkable.filter(
+    (p) => p.r >= 5 && p.c >= 5 && !(p.r === blinky.r && p.c === blinky.c) && getBfsDistance(playerSpawn, p, maze) >= 4
+  );
+  const inky = inkyList.length > 0 ? inkyList[Math.floor(Math.random() * inkyList.length)] : { r: 7, c: 7 };
 
-  return { player: playerSpawn, ghost1: g1, ghost2: g2 };
+  // Clyde: Bottom-left quadrant
+  const clydeList = walkable.filter(
+    (p) => p.r >= 5 && p.c <= 3 && !(p.r === pinky.r && p.c === pinky.c) && getBfsDistance(playerSpawn, p, maze) >= 4
+  );
+  const clyde = clydeList.length > 0 ? clydeList[Math.floor(Math.random() * clydeList.length)] : { r: 7, c: 1 };
+
+  return { player: playerSpawn, blinky, pinky, inky, clyde };
 }
 
 // True BFS Shortest Path step finder with optional obstacle/ghost avoidance
@@ -188,7 +193,7 @@ function findBfsStep(
   current: Point,
   target: Point,
   lastPos: Point | null,
-  avoidPos?: Point | null
+  avoidPos?: Point | Point[] | null
 ): Point {
   if (current.r === target.r && current.c === target.c) return current;
 
@@ -219,9 +224,10 @@ function findBfsStep(
     }
   }
 
-  // Avoid clumping on other ghost if alternative path exists
+  // Avoid clumping on other ghosts if alternative path exists
   if (avoidPos && candidates.length > 1) {
-    const nonAvoid = candidates.filter((m) => !(m.r === avoidPos.r && m.c === avoidPos.c));
+    const avoids = Array.isArray(avoidPos) ? avoidPos : [avoidPos];
+    const nonAvoid = candidates.filter((m) => !avoids.some((a) => a.r === m.r && a.c === m.c));
     if (nonAvoid.length > 0) {
       candidates = nonAvoid;
     }
@@ -264,44 +270,128 @@ function findBfsStep(
   return best;
 }
 
-// Modern AI Vector Interception: projects player momentum through corridor intersections
-function predictInterceptTarget(
-  maze: number[][],
-  player: Point,
-  direction: Direction,
-  lead: number = 2
-): Point {
+// ==========================================
+// AUTHENTIC PAC-MAN GHOST AI TARGETING
+// ==========================================
+
+// 1. Blinky (Red) – Direct Chase: Always targets Pac-Man's current position
+function getBlinkyTarget(player: Point): Point {
+  return player;
+}
+
+// 2. Pinky (Pink) – Ambush: Targets a position 3 tiles ahead of Pac-Man in movement direction
+function getPinkyTarget(player: Point, direction: Direction): Point {
   if (!direction) return player;
   let dr = direction === "UP" ? -1 : direction === "DOWN" ? 1 : 0;
   let dc = direction === "LEFT" ? -1 : direction === "RIGHT" ? 1 : 0;
-
-  let curr = player;
-  for (let s = 1; s <= lead; s++) {
-    const nr = curr.r + dr;
-    const nc = curr.c + dc;
-    if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9 && maze[nr][nc] !== 1) {
-      curr = { r: nr, c: nc };
-    } else {
-      // Hit a corner or intersection wall: check orthogonal turn branches
-      const turns = [
-        { r: -dc, c: -dr },
-        { r: dc, c: dr },
-      ];
-      for (const t of turns) {
-        const tr = curr.r + t.r;
-        const tc = curr.c + t.c;
-        if (tr >= 0 && tr < 9 && tc >= 0 && tc < 9 && maze[tr][tc] !== 1) {
-          curr = { r: tr, c: tc };
-          dr = t.r;
-          dc = t.c;
-          break;
-        }
-      }
-      break;
-    }
-  }
-  return curr;
+  return {
+    r: Math.max(0, Math.min(8, player.r + dr * 3)),
+    c: Math.max(0, Math.min(8, player.c + dc * 3)),
+  };
 }
+
+// 3. Inky (Cyan) – Intercept: Uses Pac-Man's position and Blinky's position to calculate target.
+// Selects the tile 2 spaces ahead of Pac-Man, and doubles the vector from Blinky!
+function getInkyTarget(player: Point, direction: Direction, blinky: Point): Point {
+  let dr = direction === "UP" ? -1 : direction === "DOWN" ? 1 : 0;
+  let dc = direction === "LEFT" ? -1 : direction === "RIGHT" ? 1 : 0;
+  const pivotR = player.r + dr * 2;
+  const pivotC = player.c + dc * 2;
+  return {
+    r: Math.max(0, Math.min(8, pivotR + (pivotR - blinky.r))),
+    c: Math.max(0, Math.min(8, pivotC + (pivotC - blinky.c))),
+  };
+}
+
+// 4. Clyde (Orange) – Chase and Retreat: Chases Pac-Man when far away (>3 tiles),
+// retreats toward its home corner (7, 1) when close (<=3 tiles).
+function getClydeTarget(player: Point, clyde: Point, maze: number[][]): Point {
+  const dist = getBfsDistance(clyde, player, maze);
+  if (dist > 3) {
+    return player; // Chases when far
+  }
+  return { r: 7, c: 1 }; // Retreats to bottom-left corner
+}
+
+// Pupil offsets for smooth eye tracking
+function getPupilOffset(dir: Direction): { dx: number; dy: number } {
+  switch (dir) {
+    case "UP": return { dx: 0, dy: -0.9 };
+    case "DOWN": return { dx: 0, dy: 0.9 };
+    case "LEFT": return { dx: -0.9, dy: 0 };
+    case "RIGHT": return { dx: 0.9, dy: 0 };
+    default: return { dx: 0, dy: 0 };
+  }
+}
+
+// Reusable Ghost SVG Renderer
+const GhostSvg: React.FC<{
+  pos: Point;
+  dir: Direction;
+  color: string;
+  isOverclocked: boolean;
+  isPlaying: boolean;
+}> = ({ pos, dir, color, isOverclocked, isPlaying }) => {
+  const pupil = getPupilOffset(dir);
+  return (
+    <g
+      style={{
+        transform: `translate(${pos.c * CELL_SIZE + 10}px, ${pos.r * CELL_SIZE + 10}px)`,
+        transition: isPlaying
+          ? isOverclocked
+            ? "transform 0.46s ease-out"
+            : "transform 0.28s cubic-bezier(0.25, 0.1, 0.25, 1)"
+          : "none",
+      }}
+    >
+      {/* Antennae */}
+      <line
+        x1="-3"
+        y1="-7"
+        x2="-5"
+        y2="-9"
+        stroke={isOverclocked ? "#818cf8" : color}
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="3"
+        y1="-7"
+        x2="5"
+        y2="-9"
+        stroke={isOverclocked ? "#818cf8" : color}
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <circle cx="-5" cy="-9" r="0.8" fill={isOverclocked ? "#818cf8" : color} />
+      <circle cx="5" cy="-9" r="0.8" fill={isOverclocked ? "#818cf8" : color} />
+      {/* Body & Wavy Skirt */}
+      <path
+        d="M -7 7 L -7 0 A 7 7 0 0 1 7 0 L 7 7 L 4 5.2 L 1 7 L -2 5.2 L -4 7 Z"
+        fill={isOverclocked ? "#6366f1" : color}
+        className={`${isOverclocked ? "animate-pulse" : ""} stroke-slate-900 dark:stroke-slate-950`}
+        strokeWidth="1"
+      />
+      {/* Eyes with smooth directional tracking */}
+      <circle cx="-3" cy="-1" r="2.1" fill="#ffffff" />
+      <circle cx="3" cy="-1" r="2.1" fill="#ffffff" />
+      <circle
+        cx={-3 + pupil.dx}
+        cy={-1 + pupil.dy}
+        r="1.05"
+        fill="#0f172a"
+        style={{ transition: "cx 0.15s ease, cy 0.15s ease" }}
+      />
+      <circle
+        cx={3 + pupil.dx}
+        cy={-1 + pupil.dy}
+        r="1.05"
+        fill="#0f172a"
+        style={{ transition: "cx 0.15s ease, cy 0.15s ease" }}
+      />
+    </g>
+  );
+};
 
 export const ByteRun: React.FC = () => {
   // Start with a random maze preset
@@ -319,16 +409,24 @@ export const ByteRun: React.FC = () => {
   const [player, setPlayer] = useState<Point>(initialSpawns.player);
   const [direction, setDirection] = useState<Direction>(null);
 
-  // Ghost 1 (Chaser - Red)
-  const [ghost1, setGhost1] = useState<Point>(initialSpawns.ghost1);
-  const [ghost1Dir, setGhost1Dir] = useState<Direction>("UP");
+  // Active Ghost Count (1 to 4 ghosts, defaults to 2: Blinky & Inky)
+  const [ghostCount, setGhostCount] = useState<number>(2);
 
-  // Ghost 2 (Predictor - Cyan)
-  const [ghost2, setGhost2] = useState<Point>(initialSpawns.ghost2);
-  const [ghost2Dir, setGhost2Dir] = useState<Direction>("DOWN");
+  // 1. Blinky (Red - Direct Chase)
+  const [blinky, setBlinky] = useState<Point>(initialSpawns.blinky);
+  const [blinkyDir, setBlinkyDir] = useState<Direction>("UP");
 
-  // Ghost Count Mode ("TWO" vs "ONE")
-  const [ghostMode, setGhostMode] = useState<"ONE" | "TWO">("TWO");
+  // 2. Pinky (Pink - 4-Tile Ambush)
+  const [pinky, setPinky] = useState<Point>(initialSpawns.pinky);
+  const [pinkyDir, setPinkyDir] = useState<Direction>("DOWN");
+
+  // 3. Inky (Cyan - Vector Intercept)
+  const [inky, setInky] = useState<Point>(initialSpawns.inky);
+  const [inkyDir, setInkyDir] = useState<Direction>("UP");
+
+  // 4. Clyde (Orange - Chase & Retreat)
+  const [clyde, setClyde] = useState<Point>(initialSpawns.clyde);
+  const [clydeDir, setClydeDir] = useState<Direction>("LEFT");
 
   // Game flow states
   const [score, setScore] = useState(0);
@@ -355,29 +453,36 @@ export const ByteRun: React.FC = () => {
     playerPrev: null as Point | null,
     direction: null as Direction,
     nextDirection: null as Direction,
-    ghost1: initialSpawns.ghost1,
-    ghost1Prev: null as Point | null,
-    ghost1Spawn: initialSpawns.ghost1,
-    ghost2: initialSpawns.ghost2,
-    ghost2Prev: null as Point | null,
-    ghost2Spawn: initialSpawns.ghost2,
-    ghost2Cycle: 0,
+    ghostCount: 2,
+    blinky: initialSpawns.blinky,
+    blinkyPrev: null as Point | null,
+    blinkySpawn: initialSpawns.blinky,
+    pinky: initialSpawns.pinky,
+    pinkyPrev: null as Point | null,
+    pinkySpawn: initialSpawns.pinky,
+    inky: initialSpawns.inky,
+    inkyPrev: null as Point | null,
+    inkySpawn: initialSpawns.inky,
+    clyde: initialSpawns.clyde,
+    clydePrev: null as Point | null,
+    clydeSpawn: initialSpawns.clyde,
     score: 0,
     isProtected: true,
     overclockUntil: 0,
     gameStartTime: 0,
-    ghostMode: "TWO" as "ONE" | "TWO",
     aiMode: "NEURAL" as AiMode,
     lastPlayerTime: 0,
-    lastGhost1Time: 0,
-    lastGhost2Time: 0,
-    closeGhost: null as 1 | 2 | null,
+    lastBlinkyTime: 0,
+    lastPinkyTime: 0,
+    lastInkyTime: 0,
+    lastClydeTime: 0,
+    closeGhost: null as "blinky" | "pinky" | "inky" | "clyde" | null,
     evasionCooldown: 0,
   });
 
   useEffect(() => {
-    loopRef.current.ghostMode = ghostMode;
-  }, [ghostMode]);
+    loopRef.current.ghostCount = ghostCount;
+  }, [ghostCount]);
 
   useEffect(() => {
     loopRef.current.aiMode = aiMode;
@@ -391,9 +496,9 @@ export const ByteRun: React.FC = () => {
   const speedBoost = Math.round((1 - lossValue) * 45);
 
   const currentGhostSpeed = useMemo(() => {
-    let base = aiMode === "OVERFIT" ? 280 : aiMode === "HEURISTIC" ? 340 : 310;
+    let base = aiMode === "OVERFIT" ? 270 : aiMode === "HEURISTIC" ? 340 : 300;
     if (isOverclocked) return base + 160;
-    return Math.max(210, base - speedBoost);
+    return Math.max(200, base - speedBoost);
   }, [aiMode, isOverclocked, speedBoost]);
 
   const cycleAiMode = useCallback(() => {
@@ -468,13 +573,23 @@ export const ByteRun: React.FC = () => {
     ref.playerPrev = null;
     ref.direction = null;
     ref.nextDirection = null;
-    ref.ghost1 = spawns.ghost1;
-    ref.ghost1Prev = null;
-    ref.ghost1Spawn = spawns.ghost1;
-    ref.ghost2 = spawns.ghost2;
-    ref.ghost2Prev = null;
-    ref.ghost2Spawn = spawns.ghost2;
-    ref.ghost2Cycle = 0;
+
+    ref.blinky = spawns.blinky;
+    ref.blinkyPrev = null;
+    ref.blinkySpawn = spawns.blinky;
+
+    ref.pinky = spawns.pinky;
+    ref.pinkyPrev = null;
+    ref.pinkySpawn = spawns.pinky;
+
+    ref.inky = spawns.inky;
+    ref.inkyPrev = null;
+    ref.inkySpawn = spawns.inky;
+
+    ref.clyde = spawns.clyde;
+    ref.clydePrev = null;
+    ref.clydeSpawn = spawns.clyde;
+
     ref.score = 0;
     ref.isProtected = true;
     ref.overclockUntil = 0;
@@ -482,18 +597,29 @@ export const ByteRun: React.FC = () => {
     ref.closeGhost = null;
     ref.evasionCooldown = 0;
     ref.lastPlayerTime = 0;
-    ref.lastGhost1Time = 0;
-    ref.lastGhost2Time = 0;
+    ref.lastBlinkyTime = 0;
+    ref.lastPinkyTime = 0;
+    ref.lastInkyTime = 0;
+    ref.lastClydeTime = 0;
     ref.aiMode = aiMode;
 
     setMazeIdx(nextIdx);
     setMaze(newMaze);
     setPlayer(spawns.player);
     setDirection(null);
-    setGhost1(spawns.ghost1);
-    setGhost1Dir("UP");
-    setGhost2(spawns.ghost2);
-    setGhost2Dir("DOWN");
+
+    setBlinky(spawns.blinky);
+    setBlinkyDir("UP");
+
+    setPinky(spawns.pinky);
+    setPinkyDir("DOWN");
+
+    setInky(spawns.inky);
+    setInkyDir("UP");
+
+    setClyde(spawns.clyde);
+    setClydeDir("LEFT");
+
     setScore(0);
     setGameState("IDLE");
     setIsProtected(true);
@@ -570,8 +696,10 @@ export const ByteRun: React.FC = () => {
 
       // Initialize frame timers on first frame
       if (ref.lastPlayerTime === 0) ref.lastPlayerTime = time;
-      if (ref.lastGhost1Time === 0) ref.lastGhost1Time = time;
-      if (ref.lastGhost2Time === 0) ref.lastGhost2Time = time;
+      if (ref.lastBlinkyTime === 0) ref.lastBlinkyTime = time;
+      if (ref.lastPinkyTime === 0) ref.lastPinkyTime = time;
+      if (ref.lastInkyTime === 0) ref.lastInkyTime = time;
+      if (ref.lastClydeTime === 0) ref.lastClydeTime = time;
 
       // Handle Overclock expiration
       if (ref.overclockUntil > 0 && time >= ref.overclockUntil) {
@@ -583,6 +711,75 @@ export const ByteRun: React.FC = () => {
       const elapsed = ref.gameStartTime > 0 ? time - ref.gameStartTime : 0;
       // First 5 seconds: Ghosts in SCATTER mode (patrol corners) to give player comfortable setup
       const isScatter = elapsed < 5000;
+
+      // Dynamic Speed & Progressive Training Convergence Calculation
+      const curDotsRemaining = ref.maze.flat().filter((c) => c === 0 || c === 3).length;
+      const curLoss = Math.max(0, curDotsRemaining / 35);
+      const curSpeedBoost = Math.round((1 - curLoss) * 40);
+
+      // In scatter mode (first 5s), ghosts are relaxed (360ms/380ms) to give player comfortable setup
+      let baseBlinky = isScatter ? 360 : 300;
+      let basePinky = isScatter ? 370 : 315;
+      let baseInky = isScatter ? 380 : 330;
+      let baseClyde = isScatter ? 400 : 345;
+
+      if (ref.aiMode === "OVERFIT") {
+        baseBlinky = isScatter ? 330 : 270;
+        basePinky = isScatter ? 340 : 285;
+        baseInky = isScatter ? 350 : 300;
+        baseClyde = isScatter ? 370 : 315;
+      } else if (ref.aiMode === "HEURISTIC") {
+        baseBlinky = isScatter ? 390 : 340;
+        basePinky = isScatter ? 400 : 355;
+        baseInky = isScatter ? 410 : 370;
+        baseClyde = isScatter ? 430 : 385;
+      }
+
+      const blinkyInterval = isFleeing ? 450 : Math.max(200, baseBlinky - curSpeedBoost);
+      const inkyInterval = isFleeing ? 470 : Math.max(220, baseInky - curSpeedBoost);
+      const pinkyInterval = isFleeing ? 460 : Math.max(215, basePinky - curSpeedBoost);
+      const clydeInterval = isFleeing ? 490 : Math.max(235, baseClyde - curSpeedBoost);
+
+      // Helper for collision checking
+      const handleCollision = (
+        nextPos: Point,
+        ghostPrev: Point | null,
+        ghostSpawn: Point,
+        setGhostPos: (p: Point) => void,
+        key: "blinky" | "pinky" | "inky" | "clyde"
+      ): boolean => {
+        const directHit = ref.player.r === nextPos.r && ref.player.c === nextPos.c;
+        const crossoverHit =
+          ref.playerPrev &&
+          ghostPrev &&
+          ref.playerPrev.r === nextPos.r &&
+          ref.playerPrev.c === nextPos.c &&
+          ref.player.r === ghostPrev.r &&
+          ref.player.c === ghostPrev.c;
+
+        if (directHit || crossoverHit) {
+          if (isFleeing) {
+            if (key === "blinky") { ref.blinky = ghostSpawn; ref.blinkyPrev = null; }
+            else if (key === "pinky") { ref.pinky = ghostSpawn; ref.pinkyPrev = null; }
+            else if (key === "inky") { ref.inky = ghostSpawn; ref.inkyPrev = null; }
+            else if (key === "clyde") { ref.clyde = ghostSpawn; ref.clydePrev = null; }
+            setGhostPos(ghostSpawn);
+            ref.score += 100;
+            setScore(ref.score);
+            updateHighScore(ref.score);
+            triggerScoreChip("+100 REBOOT!");
+            triggerHaptic([30, 80]);
+            return false;
+          } else if (!ref.isProtected) {
+            ref.gameState = "LOST";
+            setGameState("LOST");
+            updateHighScore(ref.score);
+            triggerHaptic(40);
+            return true;
+          }
+        }
+        return false;
+      };
 
       // 1. PLAYER TICK (Every 175ms - Snappy & Responsive)
       if (time - ref.lastPlayerTime >= 175) {
@@ -625,64 +822,43 @@ export const ByteRun: React.FC = () => {
             ref.player = { r: nr, c: nc };
             setPlayer({ r: nr, c: nc });
 
-            // Immediate collision check on player step (direct hit and crossover swap)
-            const hitG1Direct = ref.player.r === ref.ghost1.r && ref.player.c === ref.ghost1.c;
-            const hitG1Crossover =
-              ref.ghost1Prev &&
-              ref.playerPrev &&
-              ref.player.r === ref.ghost1Prev.r &&
-              ref.player.c === ref.ghost1Prev.c &&
-              ref.ghost1.r === ref.playerPrev.r &&
-              ref.ghost1.c === ref.playerPrev.c;
+            // Immediate collision check on player step against all active ghosts
+            const currentActiveGhosts = [
+              { key: "blinky" as const, pos: ref.blinky, prev: ref.blinkyPrev, spawn: ref.blinkySpawn, set: setBlinky },
+              ...(ref.ghostCount >= 2 ? [{ key: "inky" as const, pos: ref.inky, prev: ref.inkyPrev, spawn: ref.inkySpawn, set: setInky }] : []),
+              ...(ref.ghostCount >= 3 ? [{ key: "pinky" as const, pos: ref.pinky, prev: ref.pinkyPrev, spawn: ref.pinkySpawn, set: setPinky }] : []),
+              ...(ref.ghostCount >= 4 ? [{ key: "clyde" as const, pos: ref.clyde, prev: ref.clydePrev, spawn: ref.clydeSpawn, set: setClyde }] : []),
+            ];
 
-            const hitG2Direct =
-              ref.ghostMode === "TWO" &&
-              ref.player.r === ref.ghost2.r &&
-              ref.player.c === ref.ghost2.c;
-            const hitG2Crossover =
-              ref.ghostMode === "TWO" &&
-              ref.ghost2Prev &&
-              ref.playerPrev &&
-              ref.player.r === ref.ghost2Prev.r &&
-              ref.player.c === ref.ghost2Prev.c &&
-              ref.ghost2.r === ref.playerPrev.r &&
-              ref.ghost2.c === ref.playerPrev.c;
+            for (const g of currentActiveGhosts) {
+              const hitDirect = ref.player.r === g.pos.r && ref.player.c === g.pos.c;
+              const hitCrossover =
+                g.prev &&
+                ref.playerPrev &&
+                ref.player.r === g.prev.r &&
+                ref.player.c === g.prev.c &&
+                g.pos.r === ref.playerPrev.r &&
+                g.pos.c === ref.playerPrev.c;
 
-            if (hitG1Direct || hitG1Crossover) {
-              if (isFleeing) {
-                ref.ghost1 = ref.ghost1Spawn;
-                ref.ghost1Prev = null;
-                setGhost1(ref.ghost1Spawn);
-                ref.score += 100;
-                setScore(ref.score);
-                updateHighScore(ref.score);
-                triggerScoreChip("+100 REBOOT!");
-                triggerHaptic([30, 80]);
-              } else if (!ref.isProtected) {
-                ref.gameState = "LOST";
-                setGameState("LOST");
-                updateHighScore(ref.score);
-                triggerHaptic(40);
-                return;
-              }
-            }
-
-            if (hitG2Direct || hitG2Crossover) {
-              if (isFleeing) {
-                ref.ghost2 = ref.ghost2Spawn;
-                ref.ghost2Prev = null;
-                setGhost2(ref.ghost2Spawn);
-                ref.score += 100;
-                setScore(ref.score);
-                updateHighScore(ref.score);
-                triggerScoreChip("+100 REBOOT!");
-                triggerHaptic([30, 80]);
-              } else if (!ref.isProtected) {
-                ref.gameState = "LOST";
-                setGameState("LOST");
-                updateHighScore(ref.score);
-                triggerHaptic(40);
-                return;
+              if (hitDirect || hitCrossover) {
+                if (isFleeing) {
+                  if (g.key === "blinky") { ref.blinky = g.spawn; ref.blinkyPrev = null; }
+                  else if (g.key === "pinky") { ref.pinky = g.spawn; ref.pinkyPrev = null; }
+                  else if (g.key === "inky") { ref.inky = g.spawn; ref.inkyPrev = null; }
+                  else if (g.key === "clyde") { ref.clyde = g.spawn; ref.clydePrev = null; }
+                  g.set(g.spawn);
+                  ref.score += 100;
+                  setScore(ref.score);
+                  updateHighScore(ref.score);
+                  triggerScoreChip("+100 REBOOT!");
+                  triggerHaptic([30, 80]);
+                } else if (!ref.isProtected) {
+                  ref.gameState = "LOST";
+                  setGameState("LOST");
+                  updateHighScore(ref.score);
+                  triggerHaptic(40);
+                  return;
+                }
               }
             }
 
@@ -727,160 +903,141 @@ export const ByteRun: React.FC = () => {
         }
       }
 
-      // Dynamic Speed & Progressive Training Convergence Calculation
-      const curDotsRemaining = ref.maze.flat().filter((c) => c === 0 || c === 3).length;
-      const curLoss = Math.max(0, curDotsRemaining / 35);
-      const curSpeedBoost = Math.round((1 - curLoss) * 45);
-
-      // In scatter mode (first 5s), ghosts are relaxed (360ms/380ms) to give player comfortable setup
-      let baseG1 = isScatter ? 360 : 310;
-      let baseG2 = isScatter ? 380 : 330;
-      let fleeG1 = 450;
-      let fleeG2 = 490;
-
-      if (ref.aiMode === "OVERFIT") {
-        baseG1 = isScatter ? 330 : 275;
-        baseG2 = isScatter ? 350 : 290;
-      } else if (ref.aiMode === "HEURISTIC") {
-        baseG1 = isScatter ? 390 : 340;
-        baseG2 = isScatter ? 410 : 365;
-      }
-
-      const g1Interval = isFleeing ? fleeG1 : Math.max(215, baseG1 - curSpeedBoost);
-      const g2Interval = isFleeing ? fleeG2 : Math.max(230, baseG2 - curSpeedBoost);
-
-      // 2. GHOST 1 (Chaser - Gradient Pursuit / Scatter Policy) TICK
-      if (time - ref.lastGhost1Time >= g1Interval) {
-        ref.lastGhost1Time = time;
+      // 2. GHOST 1: BLINKY (Red) – Direct Chase Policy TICK
+      if (time - ref.lastBlinkyTime >= blinkyInterval) {
+        ref.lastBlinkyTime = time;
 
         let target: Point;
         if (isFleeing) {
           target = getFarthestCorner(ref.player);
         } else if (isScatter) {
-          target = { r: 1, c: 1 }; // Scatter: patrol top-left corner
+          target = { r: 1, c: 7 }; // Blinky scatter corner: top-right
         } else {
-          target = ref.player; // Chase player
+          target = getBlinkyTarget(ref.player); // Direct Chase
         }
 
-        const next = findBfsStep(ref.maze, ref.ghost1, target, ref.ghost1Prev);
+        const avoid: Point[] = [];
+        if (ref.ghostCount >= 2) avoid.push(ref.inky);
+        if (ref.ghostCount >= 3) avoid.push(ref.pinky);
+        if (ref.ghostCount >= 4) avoid.push(ref.clyde);
 
-        if (next.r < ref.ghost1.r) setGhost1Dir("UP");
-        else if (next.r > ref.ghost1.r) setGhost1Dir("DOWN");
-        else if (next.c < ref.ghost1.c) setGhost1Dir("LEFT");
-        else if (next.c > ref.ghost1.c) setGhost1Dir("RIGHT");
+        const next = findBfsStep(ref.maze, ref.blinky, target, ref.blinkyPrev, avoid);
 
-        ref.ghost1Prev = ref.ghost1;
-        ref.ghost1 = next;
-        setGhost1(next);
+        if (next.r < ref.blinky.r) setBlinkyDir("UP");
+        else if (next.r > ref.blinky.r) setBlinkyDir("DOWN");
+        else if (next.c < ref.blinky.c) setBlinkyDir("LEFT");
+        else if (next.c > ref.blinky.c) setBlinkyDir("RIGHT");
 
-        // Immediate collision check (direct + crossover swap)
-        const directHit = ref.player.r === next.r && ref.player.c === next.c;
-        const crossoverHit =
-          ref.playerPrev &&
-          ref.playerPrev.r === next.r &&
-          ref.playerPrev.c === next.c &&
-          ref.player.r === ref.ghost1Prev.r &&
-          ref.player.c === ref.ghost1Prev.c;
+        ref.blinkyPrev = ref.blinky;
+        ref.blinky = next;
+        setBlinky(next);
 
-        if (directHit || crossoverHit) {
-          if (isFleeing) {
-            ref.ghost1 = ref.ghost1Spawn;
-            ref.ghost1Prev = null;
-            setGhost1(ref.ghost1Spawn);
-            ref.score += 100;
-            setScore(ref.score);
-            updateHighScore(ref.score);
-            triggerScoreChip("+100 REBOOT!");
-            triggerHaptic([30, 80]);
-          } else if (!ref.isProtected) {
-            ref.gameState = "LOST";
-            setGameState("LOST");
-            updateHighScore(ref.score);
-            triggerHaptic(40);
-            return;
-          }
-        }
-
-        // Evasion bonus check
-        const d1 = getBfsDistance(ref.player, next, ref.maze);
-        if (d1 === 1 && ref.closeGhost === null) {
-          ref.closeGhost = 1;
-        } else if (ref.closeGhost === 1 && d1 >= 3 && ref.evasionCooldown <= 0) {
-          ref.score += 20;
-          setScore(ref.score);
-          updateHighScore(ref.score);
-          triggerScoreChip("+20 EVADE");
-          triggerHaptic(15);
-          ref.closeGhost = null;
-          ref.evasionCooldown = 8;
-        }
+        if (handleCollision(next, ref.blinkyPrev, ref.blinkySpawn, setBlinky, "blinky")) return;
       }
 
-      // 3. GHOST 2 (Predictor & Flanker - Vector Interception / Scatter Policy) TICK
-      if (ref.ghostMode === "TWO" && time - ref.lastGhost2Time >= g2Interval) {
-        ref.lastGhost2Time = time;
+      // 3. GHOST 2: INKY (Cyan) – Vector Interception Policy TICK
+      if (ref.ghostCount >= 2 && time - ref.lastInkyTime >= inkyInterval) {
+        ref.lastInkyTime = time;
 
         let target: Point;
-
         if (isFleeing) {
           target = getFarthestCorner(ref.player, getFarthestCorner(ref.player));
         } else if (isScatter) {
-          target = { r: 7, c: 7 }; // Scatter: patrol bottom-right corner
-        } else if (ref.aiMode === "HEURISTIC") {
-          ref.ghost2Cycle++;
-          const cycle = Math.floor(ref.ghost2Cycle / 8);
-          target = cycle % 2 === 0 ? ref.player : (cycle % 4 === 1 ? { r: 1, c: 7 } : { r: 7, c: 1 });
+          target = { r: 7, c: 7 }; // Inky scatter corner: bottom-right
         } else {
-          // NEURAL and OVERFIT: gentle flank
-          const lead = ref.aiMode === "OVERFIT" ? 2 : 1;
-          target = predictInterceptTarget(ref.maze, ref.player, ref.direction, lead);
+          target = getInkyTarget(ref.player, ref.direction, ref.blinky); // Vector Intercept
         }
 
-        // Avoid stepping onto Ghost 1's position to prevent merging
-        const next = findBfsStep(ref.maze, ref.ghost2, target, ref.ghost2Prev, ref.ghost1);
+        const avoid: Point[] = [ref.blinky];
+        if (ref.ghostCount >= 3) avoid.push(ref.pinky);
+        if (ref.ghostCount >= 4) avoid.push(ref.clyde);
 
-        if (next.r < ref.ghost2.r) setGhost2Dir("UP");
-        else if (next.r > ref.ghost2.r) setGhost2Dir("DOWN");
-        else if (next.c < ref.ghost2.c) setGhost2Dir("LEFT");
-        else if (next.c > ref.ghost2.c) setGhost2Dir("RIGHT");
+        const next = findBfsStep(ref.maze, ref.inky, target, ref.inkyPrev, avoid);
 
-        ref.ghost2Prev = ref.ghost2;
-        ref.ghost2 = next;
-        setGhost2(next);
+        if (next.r < ref.inky.r) setInkyDir("UP");
+        else if (next.r > ref.inky.r) setInkyDir("DOWN");
+        else if (next.c < ref.inky.c) setInkyDir("LEFT");
+        else if (next.c > ref.inky.c) setInkyDir("RIGHT");
 
-        // Immediate collision check (direct + crossover swap)
-        const directHit = ref.player.r === next.r && ref.player.c === next.c;
-        const crossoverHit =
-          ref.playerPrev &&
-          ref.playerPrev.r === next.r &&
-          ref.playerPrev.c === next.c &&
-          ref.player.r === ref.ghost2Prev.r &&
-          ref.player.c === ref.ghost2Prev.c;
+        ref.inkyPrev = ref.inky;
+        ref.inky = next;
+        setInky(next);
 
-        if (directHit || crossoverHit) {
-          if (isFleeing) {
-            ref.ghost2 = ref.ghost2Spawn;
-            ref.ghost2Prev = null;
-            setGhost2(ref.ghost2Spawn);
-            ref.score += 100;
-            setScore(ref.score);
-            updateHighScore(ref.score);
-            triggerScoreChip("+100 REBOOT!");
-            triggerHaptic([30, 80]);
-          } else if (!ref.isProtected) {
-            ref.gameState = "LOST";
-            setGameState("LOST");
-            updateHighScore(ref.score);
-            triggerHaptic(40);
-            return;
-          }
+        if (handleCollision(next, ref.inkyPrev, ref.inkySpawn, setInky, "inky")) return;
+      }
+
+      // 4. GHOST 3: PINKY (Pink) – 4-Tile Ambush Policy TICK
+      if (ref.ghostCount >= 3 && time - ref.lastPinkyTime >= pinkyInterval) {
+        ref.lastPinkyTime = time;
+
+        let target: Point;
+        if (isFleeing) {
+          target = getFarthestCorner(ref.player);
+        } else if (isScatter) {
+          target = { r: 1, c: 1 }; // Pinky scatter corner: top-left
+        } else {
+          target = getPinkyTarget(ref.player, ref.direction); // Ambush ahead
         }
 
-        // Evasion check for Ghost 2
-        const d2 = getBfsDistance(ref.player, next, ref.maze);
-        if (d2 === 1 && ref.closeGhost === null) {
-          ref.closeGhost = 2;
-        } else if (ref.closeGhost === 2 && d2 >= 3 && ref.evasionCooldown <= 0) {
+        const avoid: Point[] = [ref.blinky, ref.inky];
+        if (ref.ghostCount >= 4) avoid.push(ref.clyde);
+
+        const next = findBfsStep(ref.maze, ref.pinky, target, ref.pinkyPrev, avoid);
+
+        if (next.r < ref.pinky.r) setPinkyDir("UP");
+        else if (next.r > ref.pinky.r) setPinkyDir("DOWN");
+        else if (next.c < ref.pinky.c) setPinkyDir("LEFT");
+        else if (next.c > ref.pinky.c) setPinkyDir("RIGHT");
+
+        ref.pinkyPrev = ref.pinky;
+        ref.pinky = next;
+        setPinky(next);
+
+        if (handleCollision(next, ref.pinkyPrev, ref.pinkySpawn, setPinky, "pinky")) return;
+      }
+
+      // 5. GHOST 4: CLYDE (Orange) – Chase and Retreat Policy TICK
+      if (ref.ghostCount >= 4 && time - ref.lastClydeTime >= clydeInterval) {
+        ref.lastClydeTime = time;
+
+        let target: Point;
+        if (isFleeing) {
+          target = getFarthestCorner(ref.player);
+        } else if (isScatter) {
+          target = { r: 7, c: 1 }; // Clyde scatter corner: bottom-left
+        } else {
+          target = getClydeTarget(ref.player, ref.clyde, ref.maze); // Chase if far, retreat if close
+        }
+
+        const avoid: Point[] = [ref.blinky, ref.inky, ref.pinky];
+
+        const next = findBfsStep(ref.maze, ref.clyde, target, ref.clydePrev, avoid);
+
+        if (next.r < ref.clyde.r) setClydeDir("UP");
+        else if (next.r > ref.clyde.r) setClydeDir("DOWN");
+        else if (next.c < ref.clyde.c) setClydeDir("LEFT");
+        else if (next.c > ref.clyde.c) setClydeDir("RIGHT");
+
+        ref.clydePrev = ref.clyde;
+        ref.clyde = next;
+        setClyde(next);
+
+        if (handleCollision(next, ref.clydePrev, ref.clydeSpawn, setClyde, "clyde")) return;
+      }
+
+      // Evasion bonus check across all active ghosts
+      const allActiveGhosts = [
+        { key: "blinky" as const, pos: ref.blinky },
+        ...(ref.ghostCount >= 2 ? [{ key: "inky" as const, pos: ref.inky }] : []),
+        ...(ref.ghostCount >= 3 ? [{ key: "pinky" as const, pos: ref.pinky }] : []),
+        ...(ref.ghostCount >= 4 ? [{ key: "clyde" as const, pos: ref.clyde }] : []),
+      ];
+
+      for (const g of allActiveGhosts) {
+        const d = getBfsDistance(ref.player, g.pos, ref.maze);
+        if (d === 1 && ref.closeGhost === null) {
+          ref.closeGhost = g.key;
+        } else if (ref.closeGhost === g.key && d >= 3 && ref.evasionCooldown <= 0) {
           ref.score += 20;
           setScore(ref.score);
           updateHighScore(ref.score);
@@ -911,19 +1068,6 @@ export const ByteRun: React.FC = () => {
       default: return 0;
     }
   };
-
-  // Pupil offsets for smooth eye tracking
-  const getPupilOffset = (dir: Direction) => {
-    switch (dir) {
-      case "UP": return { dx: 0, dy: -0.9 };
-      case "DOWN": return { dx: 0, dy: 0.9 };
-      case "LEFT": return { dx: -0.9, dy: 0 };
-      default: return { dx: 0.9, dy: 0 };
-    }
-  };
-
-  const g1Pupil = getPupilOffset(ghost1Dir);
-  const g2Pupil = getPupilOffset(ghost2Dir);
 
   // Direction handler (starts immediately with 2s launch & elastic stretch from IDLE)
   const handleDirButton = (dir: Direction) => {
@@ -1150,32 +1294,30 @@ export const ByteRun: React.FC = () => {
                 </>
               )}
 
-              {/* Ghost Count Toggle: 1 Bug vs 2 Bugs */}
+              {/* Ghost Count Toggle: 1 to 4 Authentic Pac-Man Ghosts */}
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setGhostMode((prev) => (prev === "TWO" ? "ONE" : "TWO"));
+                  setGhostCount((prev) => (prev >= 4 ? 1 : prev + 1));
                   triggerHaptic(10);
                   containerRef.current?.focus();
                 }}
-                aria-label={ghostMode === "TWO" ? "Switch to 1 Ghost" : "Switch to 2 Ghosts"}
-                title={ghostMode === "TWO" ? "2 Bugs Active (Tap for 1)" : "1 Bug Active (Tap for 2)"}
-                className={`px-1 py-0.5 rounded text-[8.5px] font-mono-code font-bold border transition-colors touch-manipulation cursor-pointer ${
-                  ghostMode === "TWO"
-                    ? "bg-amber-100 dark:bg-amber-950/60 border-amber-500 text-amber-700 dark:text-amber-300"
-                    : "bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300"
-                }`}
+                aria-label={`Ghosts active: ${ghostCount}. Tap to cycle 1-4.`}
+                title={
+                  ghostCount === 1
+                    ? "1 Ghost: Blinky (Direct Chase)"
+                    : ghostCount === 2
+                    ? "2 Ghosts: Blinky (Chase) & Inky (Intercept)"
+                    : ghostCount === 3
+                    ? "3 Ghosts: Blinky (Chase), Inky (Intercept), Pinky (Ambush)"
+                    : "4 Ghosts: All 4 Pac-Man Ghosts (Blinky, Inky, Pinky, Clyde)"
+                }
+                className="px-1 py-0.5 rounded text-[8.5px] font-mono-code font-bold border transition-colors touch-manipulation cursor-pointer bg-amber-100 dark:bg-amber-950/60 border-amber-500 text-amber-700 dark:text-amber-300"
               >
-                {ghostMode === "TWO" ? (
-                  <span className="flex items-center gap-0.5">
-                    <Users className="w-2.5 h-2.5" /> 2
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-0.5">
-                    <User className="w-2.5 h-2.5" /> 1
-                  </span>
-                )}
+                <span className="flex items-center gap-0.5">
+                  {ghostCount === 1 ? <User className="w-2.5 h-2.5" /> : <Users className="w-2.5 h-2.5" />} {ghostCount}
+                </span>
               </button>
 
               {/* Toggle Expand / Normal Size (Manual Option) */}
@@ -1384,80 +1526,46 @@ export const ByteRun: React.FC = () => {
                 )}
               </g>
 
-              {/* Ghost 1: The Chaser (Red Bug / Fleeing Indigo in Overclock) */}
-              <g
-                style={{
-                  transform: `translate(${ghost1.c * CELL_SIZE + 10}px, ${ghost1.r * CELL_SIZE + 10}px)`,
-                  transition: gameState === "PLAYING" ? (isOverclocked ? "transform 0.44s ease-out" : "transform 0.26s cubic-bezier(0.25, 0.1, 0.25, 1)") : "none",
-                }}
-              >
-                {/* Antennae */}
-                <line x1="-3" y1="-7" x2="-5" y2="-9" stroke={isOverclocked ? "#818cf8" : "#ef4444"} strokeWidth="1.2" strokeLinecap="round" />
-                <line x1="3" y1="-7" x2="5" y2="-9" stroke={isOverclocked ? "#818cf8" : "#ef4444"} strokeWidth="1.2" strokeLinecap="round" />
-                <circle cx="-5" cy="-9" r="0.8" fill={isOverclocked ? "#818cf8" : "#ef4444"} />
-                <circle cx="5" cy="-9" r="0.8" fill={isOverclocked ? "#818cf8" : "#ef4444"} />
-                {/* Body & Wavy Skirt */}
-                <path
-                  d="M -7 7 L -7 0 A 7 7 0 0 1 7 0 L 7 7 L 4 5.2 L 1 7 L -2 5.2 L -4 7 Z"
-                  className={`${isOverclocked ? "fill-indigo-500 animate-pulse" : "fill-red-500"} stroke-slate-900 dark:stroke-slate-950`}
-                  strokeWidth="1"
-                />
-                {/* Eyes with smooth directional tracking */}
-                <circle cx="-3" cy="-1" r="2.1" fill="#ffffff" />
-                <circle cx="3" cy="-1" r="2.1" fill="#ffffff" />
-                <circle
-                  cx={-3 + g1Pupil.dx}
-                  cy={-1 + g1Pupil.dy}
-                  r="1.05"
-                  fill="#0f172a"
-                  style={{ transition: "cx 0.15s ease, cy 0.15s ease" }}
-                />
-                <circle
-                  cx={3 + g1Pupil.dx}
-                  cy={-1 + g1Pupil.dy}
-                  r="1.05"
-                  fill="#0f172a"
-                  style={{ transition: "cx 0.15s ease, cy 0.15s ease" }}
-                />
-              </g>
+              {/* 1. Blinky (Red) – Direct Chase */}
+              <GhostSvg
+                pos={blinky}
+                dir={blinkyDir}
+                color="#ef4444"
+                isOverclocked={isOverclocked}
+                isPlaying={gameState === "PLAYING"}
+              />
 
-              {/* Ghost 2: The Predictor (Cyan Bug / Fleeing Purple in Overclock) - active in TWO mode */}
-              {ghostMode === "TWO" && (
-                <g
-                  style={{
-                    transform: `translate(${ghost2.c * CELL_SIZE + 10}px, ${ghost2.r * CELL_SIZE + 10}px)`,
-                    transition: gameState === "PLAYING" ? (isOverclocked ? "transform 0.48s ease-out" : "transform 0.29s cubic-bezier(0.25, 0.1, 0.25, 1)") : "none",
-                  }}
-                >
-                  {/* Antennae */}
-                  <line x1="-3" y1="-7" x2="-5" y2="-9" stroke={isOverclocked ? "#c084fc" : "#06b6d4"} strokeWidth="1.2" strokeLinecap="round" />
-                  <line x1="3" y1="-7" x2="5" y2="-9" stroke={isOverclocked ? "#c084fc" : "#06b6d4"} strokeWidth="1.2" strokeLinecap="round" />
-                  <circle cx="-5" cy="-9" r="0.8" fill={isOverclocked ? "#c084fc" : "#06b6d4"} />
-                  <circle cx="5" cy="-9" r="0.8" fill={isOverclocked ? "#c084fc" : "#06b6d4"} />
-                  {/* Body & Wavy Skirt */}
-                  <path
-                    d="M -7 7 L -7 0 A 7 7 0 0 1 7 0 L 7 7 L 4 5.2 L 1 7 L -2 5.2 L -4 7 Z"
-                    className={`${isOverclocked ? "fill-purple-500 animate-pulse" : "fill-cyan-500"} stroke-slate-900 dark:stroke-slate-950`}
-                    strokeWidth="1"
-                  />
-                  {/* Eyes with smooth directional tracking */}
-                  <circle cx="-3" cy="-1" r="2.1" fill="#ffffff" />
-                  <circle cx="3" cy="-1" r="2.1" fill="#ffffff" />
-                  <circle
-                    cx={-3 + g2Pupil.dx}
-                    cy={-1 + g2Pupil.dy}
-                    r="1.05"
-                    fill="#0f172a"
-                    style={{ transition: "cx 0.15s ease, cy 0.15s ease" }}
-                  />
-                  <circle
-                    cx={3 + g2Pupil.dx}
-                    cy={-1 + g2Pupil.dy}
-                    r="1.05"
-                    fill="#0f172a"
-                    style={{ transition: "cx 0.15s ease, cy 0.15s ease" }}
-                  />
-                </g>
+              {/* 2. Inky (Cyan) – Intercept (active when ghostCount >= 2) */}
+              {ghostCount >= 2 && (
+                <GhostSvg
+                  pos={inky}
+                  dir={inkyDir}
+                  color="#06b6d4"
+                  isOverclocked={isOverclocked}
+                  isPlaying={gameState === "PLAYING"}
+                />
+              )}
+
+              {/* 3. Pinky (Pink) – Ambush (active when ghostCount >= 3) */}
+              {ghostCount >= 3 && (
+                <GhostSvg
+                  pos={pinky}
+                  dir={pinkyDir}
+                  color="#ec4899"
+                  isOverclocked={isOverclocked}
+                  isPlaying={gameState === "PLAYING"}
+                />
+              )}
+
+              {/* 4. Clyde (Orange) – Chase and Retreat (active when ghostCount >= 4) */}
+              {ghostCount >= 4 && (
+                <GhostSvg
+                  pos={clyde}
+                  dir={clydeDir}
+                  color="#f97316"
+                  isOverclocked={isOverclocked}
+                  isPlaying={gameState === "PLAYING"}
+                />
               )}
             </svg>
 
@@ -1671,6 +1779,30 @@ export const ByteRun: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Pac-Man Ghost AI Strategy Legend (Expanded Mode) */}
+          {isExpanded && (
+            <div className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 mt-2 pt-1.5 border-t border-slate-200 dark:border-slate-800 text-[8.5px] font-mono-code">
+              <span className="flex items-center gap-1 font-bold text-red-600 dark:text-red-400" title="Blinky: Direct Chase towards Pac-Man">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" /> Blinky: Chase
+              </span>
+              {ghostCount >= 2 && (
+                <span className="flex items-center gap-1 font-bold text-cyan-600 dark:text-cyan-400" title="Inky: Vector Intercept from Blinky">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 inline-block" /> Inky: Intercept
+                </span>
+              )}
+              {ghostCount >= 3 && (
+                <span className="flex items-center gap-1 font-bold text-pink-600 dark:text-pink-400" title="Pinky: Ambush 3 tiles ahead">
+                  <span className="w-1.5 h-1.5 rounded-full bg-pink-500 inline-block" /> Pinky: Ambush
+                </span>
+              )}
+              {ghostCount >= 4 && (
+                <span className="flex items-center gap-1 font-bold text-orange-600 dark:text-orange-400" title="Clyde: Chase when far, retreat to corner when close">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block" /> Clyde: Retreat
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Tagline */}
           <div className={`font-mono-code text-center text-slate-400 dark:text-slate-500 uppercase tracking-tight ${
