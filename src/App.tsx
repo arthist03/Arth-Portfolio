@@ -17,66 +17,6 @@ import {
 } from "lucide-react";
 import ArthPP from '/Icon/pp.jpg';
 
-const DecryptText: React.FC<{
-  text: string;
-  trigger?: boolean;
-  delay?: number;
-  speed?: number;
-}> = ({ text, trigger = true, delay = 0, speed = 25 }) => {
-  const [displayText, setDisplayText] = useState(text);
-
-  useEffect(() => {
-    if (!trigger) {
-      const chars = "!@#$%^&*()_+{}|:<>?-=[]\\;',./";
-      setDisplayText(
-        text
-          .split("")
-          .map((c) => (c === " " ? " " : chars[Math.floor(Math.random() * chars.length)]))
-          .join("")
-      );
-      return;
-    }
-
-    let isMounted = true;
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=";
-    let iteration = 0;
-    let interval: NodeJS.Timeout;
-
-    const startTimeout = setTimeout(() => {
-      interval = setInterval(() => {
-        if (!isMounted) return;
-
-        setDisplayText(
-          text
-            .split("")
-            .map((char, index) => {
-              if (char === " ") return " ";
-              if (index < iteration) {
-                return text[index];
-              }
-              return chars[Math.floor(Math.random() * chars.length)];
-            })
-            .join("")
-        );
-
-        if (iteration >= text.length) {
-          clearInterval(interval);
-        }
-
-        iteration += 0.4;
-      }, speed);
-    }, delay);
-
-    return () => {
-      isMounted = false;
-      clearTimeout(startTimeout);
-      if (interval) clearInterval(interval);
-    };
-  }, [text, trigger, delay, speed]);
-
-  return <>{displayText}</>;
-};
-
 function App() {
   const { scrollYProgress } = useScroll();
   const [activeFilter, setActiveFilter] = useState("ALL");
@@ -90,28 +30,41 @@ function App() {
         {/* Bento Dashboard Container */}
         <main className="max-w-6xl mx-auto px-4 pt-28 pb-16">
           
-          {/* Header Area */}
-          <div className="mb-8 sm:mb-10 text-center md:text-left">
+          {/* Header Area: Professional Editorial Visual System */}
+          <header className="mb-8 sm:mb-12 max-w-[680px]">
+            {/* Subtle High-Craft Metadata Pill */}
             <motion.div 
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 border-3 border-slate-900 dark:border-white bg-yellow-250 dark:bg-yellow-400 text-slate-900 font-mono-code text-[10px] sm:text-[11px] font-black uppercase tracking-wider mb-4 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#ffffff]"
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-slate-300 dark:border-[#272727] bg-white/90 dark:bg-[#181818]/90 text-slate-800 dark:text-[#9B9B9B] font-mono-code text-[11px] sm:text-xs font-medium tracking-wide mb-3 sm:mb-4 shadow-sm"
             >
-              [<DecryptText text="AI/ML & Biomedical Engineering" trigger={true} delay={300} />]
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span>AI/ML &amp; Biomedical Engineering</span>
             </motion.div>
+
+            {/* Canonical Heading 1 with Left-to-Right Neutral Gradient */}
             <motion.h1 
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-              className="text-3xl sm:text-4xl md:text-5.5xl font-display font-black tracking-tight uppercase break-words leading-tight"
+              transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+              className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight leading-[1.08] sm:leading-[1.06] bg-gradient-to-r from-[#000000] to-[#666666] dark:from-[#FFFFFF] dark:to-[#9B9B9B] bg-clip-text text-transparent"
+              style={{ textWrap: "balance" }}
             >
-              <DecryptText text="Machine Learning & " trigger={true} delay={700} />
-              <span className="bg-yellow-200 dark:bg-yellow-450 px-2 py-0.5 border-2 border-slate-900 dark:border-white text-slate-900 dark:text-white shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#ffffff] inline-block mt-1 sm:mt-0">
-                <DecryptText text="Bio-Med" trigger={true} delay={1100} />
-              </span>
+              Machine Learning &amp; Biomedical Engineering
             </motion.h1>
-          </div>
+
+            {/* Sub-headline */}
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
+              className="text-base sm:text-lg text-slate-600 dark:text-[#9B9B9B] font-normal leading-relaxed mt-3 sm:mt-4 max-w-[620px]"
+              style={{ textWrap: "pretty" }}
+            >
+              Building intelligent diagnostic algorithms, computer vision pipelines, and surgical robotics hardware for clinical healthcare.
+            </motion.p>
+          </header>
 
           {/* Grid Layout (5 Rows total on Desktop) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 auto-rows-auto md:auto-rows-[225px]">
@@ -141,7 +94,7 @@ function App() {
                 {/* Title */}
                 <div>
                   <h2 className="text-2xl sm:text-3xl font-display font-black tracking-tight text-slate-900 dark:text-white uppercase">
-                    <DecryptText text="Arth Kadiya" trigger={true} delay={900} />
+                    Arth Kadiya
                   </h2>
                   <p className="text-xs sm:text-sm font-mono-code font-bold uppercase text-indigo-650 dark:text-indigo-400 mt-1">
                     AI/ML & Biomedical Engineer
