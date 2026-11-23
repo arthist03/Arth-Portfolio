@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { RotateCcw, Trophy, Shield, Maximize2, Minimize2, Users, User, Zap, Minus } from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { RotateCcw, Trophy, Shield, Maximize2, Minimize2, Users, User, Zap, Minus, Brain, Eye, Activity, Cpu } from "lucide-react";
 
 type Direction = "UP" | "DOWN" | "LEFT" | "RIGHT" | null;
 type Point = { r: number; c: number };
+type AiMode = "NEURAL" | "OVERFIT" | "HEURISTIC";
 
 // 9x9 Balanced Connected Maze with Four 2x2 Obstacle Boxes (0 Dead Ends)
 // 1 = Wall, 0 = Normal Byte (+10), 2 = Empty path, 3 = Power-up Byte (+50)
@@ -205,6 +206,78 @@ function findBfsStep(
   return best;
 }
 
+// Modern AI Vector Interception: projects player momentum through corridor intersections
+function predictInterceptTarget(
+  maze: number[][],
+  player: Point,
+  direction: Direction,
+  lead: number = 2
+): Point {
+  if (!direction) return player;
+  let dr = direction === "UP" ? -1 : direction === "DOWN" ? 1 : 0;
+  let dc = direction === "LEFT" ? -1 : direction === "RIGHT" ? 1 : 0;
+
+  let curr = player;
+  for (let s = 1; s <= lead; s++) {
+    const nr = curr.r + dr;
+    const nc = curr.c + dc;
+    if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9 && maze[nr][nc] !== 1) {
+      curr = { r: nr, c: nc };
+    } else {
+      // Hit a corner or intersection wall: check orthogonal turn branches
+      const turns = [
+        { r: -dc, c: -dr },
+        { r: dc, c: dr },
+      ];
+      for (const t of turns) {
+        const tr = curr.r + t.r;
+        const tc = curr.c + t.c;
+        if (tr >= 0 && tr < 9 && tc >= 0 && tc < 9 && maze[tr][tc] !== 1) {
+          curr = { r: tr, c: tc };
+          dr = t.r;
+          dc = t.c;
+          break;
+        }
+      }
+      break;
+    }
+  }
+  return curr;
+}
+
+// Lightweight BFS Path extractor for AI Vision decision telemetry (next 3-4 steps)
+function getBfsPath(maze: number[][], start: Point, target: Point, maxSteps: number = 3): Point[] {
+  if (start.r === target.r && start.c === target.c) return [];
+  const queue: { pos: Point; path: Point[] }[] = [{ pos: start, path: [] }];
+  const visited = Array.from({ length: 9 }, () => Array(9).fill(false));
+  visited[start.r][start.c] = true;
+
+  const directions = [
+    { r: -1, c: 0 },
+    { r: 1, c: 0 },
+    { r: 0, c: -1 },
+    { r: 0, c: 1 },
+  ];
+
+  while (queue.length > 0) {
+    const item = queue.shift()!;
+    if (item.pos.r === target.r && item.pos.c === target.c) {
+      return item.path.slice(0, maxSteps);
+    }
+    if (item.path.length >= maxSteps + 2) continue;
+
+    for (const d of directions) {
+      const nr = item.pos.r + d.r;
+      const nc = item.pos.c + d.c;
+      if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9 && maze[nr][nc] !== 1 && !visited[nr][nc]) {
+        visited[nr][nc] = true;
+        queue.push({ pos: { r: nr, c: nc }, path: [...item.path, { r: nr, c: nc }] });
+      }
+    }
+  }
+  return [];
+}
+
 export const ByteRun: React.FC = () => {
   const initialSpawns = useRef(generateSpawns(BASE_MAZE)).current;
 
@@ -236,6 +309,8 @@ export const ByteRun: React.FC = () => {
   const [isFocused, setIsFocused] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [aiMode, setAiMode] = useState<AiMode>("NEURAL");
+  const [isAiVision, setIsAiVision] = useState(true);
   const [mouthOpen, setMouthOpen] = useState(true);
   const [isProtected, setIsProtected] = useState(true);
   const [isOverclocked, setIsOverclocked] = useState(false);
@@ -260,6 +335,7 @@ export const ByteRun: React.FC = () => {
     isProtected: true,
     overclockUntil: 0,
     ghostMode: "TWO" as "ONE" | "TWO",
+    aiMode: "NEURAL" as AiMode,
     lastPlayerTime: 0,
     lastGhost1Time: 0,
     lastGhost2Time: 0,
@@ -270,6 +346,55 @@ export const ByteRun: React.FC = () => {
   useEffect(() => {
     loopRef.current.ghostMode = ghostMode;
   }, [ghostMode]);
+
+  useEffect(() => {
+    loopRef.current.aiMode = aiMode;
+  }, [aiMode]);
+
+  // Dynamic Telemetry Metrics
+  const dotsRemaining = maze.flat().filter((c) => c === 0 || c === 3).length;
+  const initialDots = 32;
+  const lossValue = Math.max(0, dotsRemaining / initialDots);
+  const lossDisplay = lossValue.toFixed(2);
+  const speedBoost = Math.round((1 - lossValue) * 35);
+
+  // Vector Intercept & Vision Paths
+  const g2Target = useMemo(() => {
+    if (gameState !== "PLAYING") return null;
+    if (isOverclocked) return getFarthestCorner(player, getFarthestCorner(player));
+    if (aiMode === "HEURISTIC") return player;
+    const distG1 = getBfsDistance(ghost1, player, maze);
+    const lead = aiMode === "OVERFIT" ? 3 : 2;
+    if (distG1 <= 3 && direction) {
+      return predictInterceptTarget(maze, player, direction, lead + 1);
+    }
+    return predictInterceptTarget(maze, player, direction, lead);
+  }, [gameState, isOverclocked, aiMode, ghost1, player, maze, direction]);
+
+  const g1VisionPath = useMemo(() => {
+    if (!isAiVision || gameState !== "PLAYING") return [];
+    const target1 = isOverclocked ? getFarthestCorner(player) : player;
+    return getBfsPath(maze, ghost1, target1, 3);
+  }, [isAiVision, gameState, isOverclocked, player, maze, ghost1]);
+
+  const g2VisionPath = useMemo(() => {
+    if (!isAiVision || gameState !== "PLAYING" || ghostMode !== "TWO" || !g2Target) return [];
+    return getBfsPath(maze, ghost2, g2Target, 3);
+  }, [isAiVision, gameState, ghostMode, g2Target, maze, ghost2]);
+
+  const currentGhostSpeed = useMemo(() => {
+    let base = aiMode === "OVERFIT" ? 215 : aiMode === "HEURISTIC" ? 280 : 245;
+    if (isOverclocked) return base + 180;
+    return Math.max(180, base - speedBoost);
+  }, [aiMode, isOverclocked, speedBoost]);
+
+  const cycleAiMode = useCallback(() => {
+    setAiMode((prev) => {
+      const next: AiMode = prev === "NEURAL" ? "OVERFIT" : prev === "OVERFIT" ? "HEURISTIC" : "NEURAL";
+      loopRef.current.aiMode = next;
+      return next;
+    });
+  }, []);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -347,6 +472,7 @@ export const ByteRun: React.FC = () => {
     ref.lastPlayerTime = 0;
     ref.lastGhost1Time = 0;
     ref.lastGhost2Time = 0;
+    ref.aiMode = aiMode;
 
     setMaze(newMaze);
     setPlayer(spawns.player);
@@ -398,8 +524,8 @@ export const ByteRun: React.FC = () => {
 
       const isFleeing = time < ref.overclockUntil;
 
-      // 1. PLAYER TICK (Every 190ms - Snappy & Responsive)
-      if (time - ref.lastPlayerTime >= 190) {
+      // 1. PLAYER TICK (Every 175ms - Snappy & Responsive)
+      if (time - ref.lastPlayerTime >= 175) {
         ref.lastPlayerTime = time;
 
         let dirToUse = ref.direction;
@@ -515,9 +641,9 @@ export const ByteRun: React.FC = () => {
               updateHighScore(newScore);
 
               if (cellValue === 3) {
-                ref.overclockUntil = time + 6000;
+                ref.overclockUntil = time + 5500;
                 setIsOverclocked(true);
-                triggerScoreChip("+50 OVERCLOCK!");
+                triggerScoreChip("+50 LR BOOST!");
                 triggerHaptic([25, 60, 25]);
               }
 
@@ -541,8 +667,32 @@ export const ByteRun: React.FC = () => {
         }
       }
 
-      // 2. GHOST 1 (Chaser - Red Bug) TICK (300ms normal, 460ms when fleeing)
-      const g1Interval = isFleeing ? 460 : 300;
+      // Dynamic Speed & Training Convergence Calculation
+      const curDotsRemaining = ref.maze.flat().filter((c) => c === 0 || c === 3).length;
+      const curLoss = Math.max(0, curDotsRemaining / 32);
+      const curSpeedBoost = Math.round((1 - curLoss) * 35);
+
+      let baseG1 = 245;
+      let baseG2 = 265;
+      let fleeG1 = 440;
+      let fleeG2 = 480;
+
+      if (ref.aiMode === "OVERFIT") {
+        baseG1 = 215;
+        baseG2 = 230;
+        fleeG1 = 400;
+        fleeG2 = 440;
+      } else if (ref.aiMode === "HEURISTIC") {
+        baseG1 = 280;
+        baseG2 = 305;
+        fleeG1 = 480;
+        fleeG2 = 520;
+      }
+
+      const g1Interval = isFleeing ? fleeG1 : Math.max(180, baseG1 - curSpeedBoost);
+      const g2Interval = isFleeing ? fleeG2 : Math.max(195, baseG2 - curSpeedBoost);
+
+      // 2. GHOST 1 (Chaser - Gradient Pursuit Policy) TICK
       if (time - ref.lastGhost1Time >= g1Interval) {
         ref.lastGhost1Time = time;
 
@@ -601,34 +751,27 @@ export const ByteRun: React.FC = () => {
         }
       }
 
-      // 3. GHOST 2 (Predictor - Cyan Bug) TICK (340ms normal, 500ms when fleeing, only in TWO mode)
-      const g2Interval = isFleeing ? 500 : 340;
+      // 3. GHOST 2 (Predictor & Flanker - Vector Interception Policy) TICK
       if (ref.ghostMode === "TWO" && time - ref.lastGhost2Time >= g2Interval) {
         ref.lastGhost2Time = time;
-
-        ref.ghost2Cycle++;
-        const cycle = Math.floor(ref.ghost2Cycle / 8);
-        const isIntercepting = cycle % 3 !== 2;
 
         let target: Point;
 
         if (isFleeing) {
           target = getFarthestCorner(ref.player, getFarthestCorner(ref.player));
-        } else if (isIntercepting && ref.direction) {
-          let pr = ref.player.r;
-          let pc = ref.player.c;
-          if (ref.direction === "UP") pr = Math.max(1, pr - 2);
-          if (ref.direction === "DOWN") pr = Math.min(7, pr + 2);
-          if (ref.direction === "LEFT") pc = Math.max(1, pc - 2);
-          if (ref.direction === "RIGHT") pc = Math.min(7, pc + 2);
-
-          if (ref.maze[pr][pc] !== 1) {
-            target = { r: pr, c: pc };
-          } else {
-            target = ref.player;
-          }
+        } else if (ref.aiMode === "HEURISTIC") {
+          ref.ghost2Cycle++;
+          const cycle = Math.floor(ref.ghost2Cycle / 8);
+          target = cycle % 2 === 0 ? ref.player : (cycle % 4 === 1 ? { r: 1, c: 7 } : { r: 7, c: 1 });
         } else {
-          target = cycle % 2 === 0 ? { r: 1, c: 7 } : { r: 7, c: 1 };
+          // NEURAL and OVERFIT: Vector interception & Pincer ambush!
+          const distG1 = getBfsDistance(ref.ghost1, ref.player, ref.maze);
+          const lead = ref.aiMode === "OVERFIT" ? 3 : 2;
+          if (distG1 <= 3 && ref.direction) {
+            target = predictInterceptTarget(ref.maze, ref.player, ref.direction, lead + 1);
+          } else {
+            target = predictInterceptTarget(ref.maze, ref.player, ref.direction, lead);
+          }
         }
 
         // Avoid stepping onto Ghost 1's position to prevent merging
@@ -829,9 +972,12 @@ export const ByteRun: React.FC = () => {
         className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center gap-2 px-3.5 py-2 bg-yellow-400 dark:bg-yellow-400 text-slate-900 border-2 border-slate-900 dark:border-white rounded-xl font-mono-code text-[11px] sm:text-xs font-black uppercase shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#ffffff] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_#0f172a] transition-all cursor-pointer active:scale-95"
       >
         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse border border-slate-900 shrink-0" />
-        <span>BYTE RUN</span>
+        <span className="flex items-center gap-1.5">
+          <Brain className="w-3.5 h-3.5" />
+          <span>BYTE RUN</span>
+        </span>
         <span className="text-[9px] bg-slate-900 text-yellow-300 px-1.5 py-0.5 rounded font-mono-code font-bold">
-          PLAY
+          {aiMode}
         </span>
       </button>
     );
@@ -876,8 +1022,8 @@ export const ByteRun: React.FC = () => {
               : "border-slate-900 dark:border-white shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#ffffff]"
           }`}
         >
-          {/* Header: BYTE RUN • Score: 080 + Ghost Mode Toggle + Expand Toggle */}
-          <div className="flex items-center justify-between border-b-2 border-slate-900 dark:border-slate-800 pb-2 mb-2 font-mono-code text-[11px] gap-1">
+          {/* Header Bar */}
+          <div className="flex items-center justify-between border-b border-slate-900/80 dark:border-slate-800 pb-1.5 mb-1.5 font-mono-code text-[11px] gap-1">
             <div className="flex items-center gap-1.5 font-black uppercase tracking-wider text-slate-900 dark:text-white shrink-0">
               <span
                 className={`w-2 h-2 rounded-full border border-slate-900 dark:border-white shrink-0 ${
@@ -894,35 +1040,35 @@ export const ByteRun: React.FC = () => {
               />
               <span className="text-[10px] sm:text-[11px]">BYTE RUN</span>
               {isOverclocked && (
-                <span className="text-[8px] bg-indigo-600 text-white px-1 rounded font-bold animate-pulse">⚡FLEE</span>
+                <span className="text-[7.5px] sm:text-[8px] bg-indigo-600 text-white px-1 py-0.2 rounded font-bold animate-pulse">⚡LR-BOOST</span>
               )}
             </div>
 
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              <div className="flex items-center gap-1 font-bold text-slate-900 dark:text-white relative">
-                <span className="text-slate-400 dark:text-slate-500 text-[9px]">•</span>
-                <span className="text-[10px] sm:text-[11px]">Score:</span>
-                <span className="text-amber-500 dark:text-yellow-400 font-extrabold font-mono-code text-[10px] sm:text-[11px]">
-                  {score.toString().padStart(3, "0")}
-                </span>
-                {highScore > 0 && (
-                  <span
-                    className="ml-0.5 flex items-center text-amber-600 dark:text-amber-400 text-[9px]"
-                    title={`Best: ${highScore}`}
-                  >
-                    <Trophy className="w-2.5 h-2.5 sm:w-3 sm:h-3 inline" />
-                  </span>
-                )}
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+              {/* AI Policy Mode Toggle (Neural / Overfit / Heuristic) */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  cycleAiMode();
+                  triggerHaptic(10);
+                  containerRef.current?.focus();
+                }}
+                aria-label={`Current AI mode: ${aiMode}. Tap to cycle.`}
+                title={`AI Policy: ${aiMode} (Tap to cycle Neural / Overfit / Heuristic)`}
+                className={`px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-mono-code font-black border flex items-center gap-0.5 transition-all active:scale-95 cursor-pointer touch-manipulation ${
+                  aiMode === "NEURAL"
+                    ? "bg-indigo-50 dark:bg-indigo-950/70 border-indigo-500 text-indigo-700 dark:text-indigo-300"
+                    : aiMode === "OVERFIT"
+                    ? "bg-rose-50 dark:bg-rose-950/70 border-rose-500 text-rose-700 dark:text-rose-300"
+                    : "bg-emerald-50 dark:bg-emerald-950/70 border-emerald-500 text-emerald-700 dark:text-emerald-300"
+                }`}
+              >
+                <Brain className="w-2.5 h-2.5 inline" />
+                <span>{aiMode}</span>
+              </button>
 
-                {/* Floating Score Feedback Chip */}
-                {scoreChip && (
-                  <span className="absolute -top-4 right-0 text-[8px] font-mono-code font-bold bg-amber-400 text-slate-950 px-1 py-0.2 rounded border border-slate-900 shadow-[1px_1px_0px_0px_#0f172a] animate-bounce z-10">
-                    {scoreChip}
-                  </span>
-                )}
-              </div>
-
-              {/* Ghost Mode Toggle: 1 Bug vs 2 Bugs */}
+              {/* Ghost Count Toggle: 1 Bug vs 2 Bugs */}
               <button
                 type="button"
                 onClick={(e) => {
@@ -932,8 +1078,8 @@ export const ByteRun: React.FC = () => {
                   containerRef.current?.focus();
                 }}
                 aria-label={ghostMode === "TWO" ? "Switch to 1 Ghost" : "Switch to 2 Ghosts"}
-                title={ghostMode === "TWO" ? "Current: 2 Bugs (Tap for 1 Bug)" : "Current: 1 Bug (Tap for 2 Bugs)"}
-                className={`px-1.5 py-0.5 rounded text-[9px] font-mono-code font-bold border transition-colors touch-manipulation cursor-pointer ${
+                title={ghostMode === "TWO" ? "2 Bugs Active (Tap for 1)" : "1 Bug Active (Tap for 2)"}
+                className={`px-1 py-0.5 rounded text-[8.5px] font-mono-code font-bold border transition-colors touch-manipulation cursor-pointer ${
                   ghostMode === "TWO"
                     ? "bg-amber-100 dark:bg-amber-950/60 border-amber-500 text-amber-700 dark:text-amber-300"
                     : "bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300"
@@ -950,6 +1096,26 @@ export const ByteRun: React.FC = () => {
                 )}
               </button>
 
+              {/* Toggle AI Vision Vector Overlays */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsAiVision((prev) => !prev);
+                  triggerHaptic(8);
+                  containerRef.current?.focus();
+                }}
+                aria-label="Toggle AI Vision vectors"
+                title={isAiVision ? "AI Vision: Active (Decision vectors visible)" : "AI Vision: Hidden"}
+                className={`p-1 rounded border transition-all touch-manipulation cursor-pointer ${
+                  isAiVision
+                    ? "bg-cyan-100 dark:bg-cyan-950/70 border-cyan-500 text-cyan-700 dark:text-cyan-300"
+                    : "bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-400"
+                }`}
+              >
+                <Eye className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+              </button>
+
               {/* Toggle Expand / Normal Size */}
               <button
                 type="button"
@@ -962,9 +1128,9 @@ export const ByteRun: React.FC = () => {
                 }}
                 aria-label={isExpanded ? "Collapse to compact size" : "Enlarge game screen"}
                 title={isExpanded ? "Collapse size (Esc)" : "Expand into larger screen"}
-                className="p-1 sm:p-1.5 rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-90 transition-all touch-manipulation cursor-pointer"
+                className="p-1 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-90 transition-all touch-manipulation cursor-pointer"
               >
-                {isExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                {isExpanded ? <Minimize2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <Maximize2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
               </button>
 
               {/* Minimize to dock pill */}
@@ -977,11 +1143,44 @@ export const ByteRun: React.FC = () => {
                 }}
                 aria-label="Minimize game to badge"
                 title="Minimize to floating pill"
-                className="p-1 sm:p-1.5 rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-90 transition-all touch-manipulation cursor-pointer"
+                className="p-1 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-90 transition-all touch-manipulation cursor-pointer"
               >
-                <Minus className="w-3.5 h-3.5" />
+                <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
               </button>
             </div>
+          </div>
+
+          {/* AI Telemetry & Score Strip */}
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-1 mb-1.5 px-0.5 text-[8.5px] font-mono-code font-bold text-slate-500 dark:text-slate-400 relative">
+            <div className="flex items-center gap-1 text-slate-900 dark:text-white">
+              <span>SCORE:</span>
+              <span className="text-amber-500 dark:text-yellow-400 font-extrabold text-[9.5px]">
+                {score.toString().padStart(3, "0")}
+              </span>
+              {highScore > 0 && (
+                <span className="flex items-center text-amber-600 dark:text-amber-400 text-[8px]" title={`Best: ${highScore}`}>
+                  <Trophy className="w-2.5 h-2.5 inline" />
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-0.5">
+                <Activity className="w-2.5 h-2.5 text-indigo-500 inline" />
+                <span>LOSS:</span>
+                <span className="text-indigo-650 dark:text-indigo-300 font-extrabold">{lossDisplay}</span>
+              </span>
+              <span>
+                SPD:<span className="text-emerald-600 dark:text-emerald-400 font-bold ml-0.5">{currentGhostSpeed}ms</span>
+              </span>
+            </div>
+
+            {/* Floating Score Feedback Chip */}
+            {scoreChip && (
+              <span className="absolute -top-3.5 right-0 text-[8px] font-mono-code font-black bg-yellow-400 text-slate-950 px-1 py-0.2 rounded border border-slate-900 shadow-[1px_1px_0px_0px_#0f172a] animate-bounce z-20">
+                {scoreChip}
+              </span>
+            )}
           </div>
 
           {/* 9x9 Maze Viewport with touchAction: none for smooth gesture scrolling */}
@@ -1043,9 +1242,20 @@ export const ByteRun: React.FC = () => {
                         <circle
                           cx={x + CELL_SIZE / 2}
                           cy={y + CELL_SIZE / 2}
-                          r="4"
+                          r="4.5"
                           className="fill-cyan-400 dark:fill-cyan-300 animate-pulse stroke-slate-900 dark:stroke-slate-950"
                           strokeWidth="0.8"
+                        />
+                        <circle
+                          cx={x + CELL_SIZE / 2}
+                          cy={y + CELL_SIZE / 2}
+                          r="6.5"
+                          fill="none"
+                          stroke="#06b6d4"
+                          strokeWidth="0.6"
+                          strokeDasharray="2 2"
+                          className="animate-spin"
+                          opacity="0.6"
                         />
                       </g>
                     );
@@ -1053,6 +1263,55 @@ export const ByteRun: React.FC = () => {
 
                   return null;
                 })
+              )}
+
+              {/* AI Vision Overlay: Real-time Decision Vectors & Intercept Reticle */}
+              {isAiVision && gameState === "PLAYING" && (
+                <g className="pointer-events-none">
+                  {/* Ghost 1 Gradient Pursuit Vector */}
+                  {g1VisionPath.length > 0 && (
+                    <polyline
+                      points={[ghost1, ...g1VisionPath]
+                        .map((p) => `${p.c * CELL_SIZE + 10},${p.r * CELL_SIZE + 10}`)
+                        .join(" ")}
+                      fill="none"
+                      stroke={isOverclocked ? "#818cf8" : "#ef4444"}
+                      strokeWidth="1.5"
+                      strokeDasharray="2 3"
+                      opacity="0.65"
+                    />
+                  )}
+
+                  {/* Ghost 2 Vector Interception Path */}
+                  {ghostMode === "TWO" && g2VisionPath.length > 0 && (
+                    <polyline
+                      points={[ghost2, ...g2VisionPath]
+                        .map((p) => `${p.c * CELL_SIZE + 10},${p.r * CELL_SIZE + 10}`)
+                        .join(" ")}
+                      fill="none"
+                      stroke={isOverclocked ? "#c084fc" : "#06b6d4"}
+                      strokeWidth="1.5"
+                      strokeDasharray="2 3"
+                      opacity="0.65"
+                    />
+                  )}
+
+                  {/* Projected Intercept Target Reticle */}
+                  {ghostMode === "TWO" && g2Target && !isOverclocked && (
+                    <g transform={`translate(${g2Target.c * CELL_SIZE + 10}, ${g2Target.r * CELL_SIZE + 10})`}>
+                      <circle
+                        r="6"
+                        fill="none"
+                        stroke="#06b6d4"
+                        strokeWidth="1"
+                        strokeDasharray="2 2"
+                        opacity="0.8"
+                        className="animate-spin"
+                      />
+                      <circle r="1.5" fill="#06b6d4" opacity="0.9" />
+                    </g>
+                  )}
+                </g>
               )}
 
               {/* Player: Minimalist Pac-Man */}
@@ -1183,10 +1442,10 @@ export const ByteRun: React.FC = () => {
             {gameState === "WON" && (
               <div className="absolute inset-0 bg-emerald-600/95 flex flex-col items-center justify-center p-3 text-center text-white backdrop-blur-[1px] animate-in fade-in duration-200 z-20">
                 <span className={`font-black uppercase font-mono-code tracking-wider ${isExpanded ? "text-xs sm:text-sm" : "text-[10px]"}`}>
-                  Challenge completed.
+                  Model Converged.
                 </span>
                 <span className={`font-mono-code mt-0.5 opacity-90 ${isExpanded ? "text-[11px] sm:text-xs" : "text-[9px]"}`}>
-                  Score: {score} (+100 Bonus)
+                  Score: {score} (+100) • Loss: 0.00
                 </span>
                 <button
                   type="button"
@@ -1199,7 +1458,7 @@ export const ByteRun: React.FC = () => {
                     isExpanded ? "px-4 py-1.5 text-xs" : "px-2.5 py-0.5 text-[9px]"
                   }`}
                 >
-                  Play Again ↻
+                  Train Again ↻
                 </button>
               </div>
             )}
@@ -1208,10 +1467,10 @@ export const ByteRun: React.FC = () => {
             {gameState === "LOST" && (
               <div className="absolute inset-0 bg-slate-900/90 dark:bg-black/95 flex flex-col items-center justify-center p-3 text-center text-white backdrop-blur-[1px] animate-in fade-in duration-200 z-20">
                 <span className={`font-black uppercase font-mono-code text-red-400 tracking-wider ${isExpanded ? "text-xs sm:text-sm" : "text-[10px]"}`}>
-                  Caught by a bug.
+                  Training Interrupted.
                 </span>
                 <span className={`font-mono-code mt-0.5 text-slate-300 ${isExpanded ? "text-[11px] sm:text-xs" : "text-[9px]"}`}>
-                  Final Score: {score}
+                  Caught by Bug • Score: {score} • Loss: {lossDisplay}
                 </span>
                 <button
                   type="button"
@@ -1224,7 +1483,7 @@ export const ByteRun: React.FC = () => {
                     isExpanded ? "px-4 py-1.5 text-xs" : "px-2.5 py-0.5 text-[9px]"
                   }`}
                 >
-                  Play Again ↻
+                  Re-Train Model ↻
                 </button>
               </div>
             )}
@@ -1358,7 +1617,7 @@ export const ByteRun: React.FC = () => {
           <div className={`font-mono-code text-center text-slate-400 dark:text-slate-500 uppercase tracking-tight ${
             isExpanded ? "text-[9px] mt-2" : "text-[8px] mt-1"
           }`}>
-            A brief break from debugging.
+            // AUTONOMOUS AGENT SIMULATION
           </div>
         </div>
       </div>
