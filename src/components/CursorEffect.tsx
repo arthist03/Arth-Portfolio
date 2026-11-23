@@ -24,7 +24,8 @@ const CursorEffect = () => {
   const createParticle = useCallback(
     (x: number, y: number) => {
       const particle = document.createElement("div");
-      particle.className = "fixed pointer-events-none z-50 transition-all duration-1000";
+      // Highest z-index below cursor so particles don't hide under cards
+      particle.className = "fixed pointer-events-none z-[99990] transition-all duration-1000";
       particle.style.left = `${x}px`;
       particle.style.top = `${y}px`;
       particle.style.transform = "translate(-50%, -50%) rotate(0deg)";
@@ -79,8 +80,9 @@ const CursorEffect = () => {
 
     const handleMouseMove = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      const isNavbar = target.closest("nav");
-      const isClickable = target.closest("a, button, input, textarea");
+      const isNavbar = !!target.closest("nav");
+      const isGame = !!target.closest("[data-byte-run], [aria-label*='Byte Run']");
+      const isClickable = !!target.closest("a, button, input, textarea, [role='button'], .cursor-pointer");
 
       mousePos.current = { x: e.clientX, y: e.clientY };
 
@@ -98,7 +100,7 @@ const CursorEffect = () => {
           cursorRef.current.style.width = "42px";
           cursorRef.current.style.height = "42px";
           cursorRef.current.style.backgroundColor =
-            theme === "dark" ? "rgba(255, 255, 255, 0.15)" : "rgba(15, 23, 42, 0.08)";
+            theme === "dark" ? "rgba(255, 255, 255, 0.18)" : "rgba(15, 23, 42, 0.1)";
           innerCursorRef.current.style.width = "12px";
           innerCursorRef.current.style.height = "12px";
           innerCursorRef.current.style.backgroundColor = "#ef4444";
@@ -112,7 +114,8 @@ const CursorEffect = () => {
         }
       }
 
-      if (Math.random() > 0.88 && !isNavbar) {
+      // Spawn trailing particles across page, but suppress over the game widget to keep game clean
+      if (Math.random() > 0.88 && !isNavbar && !isGame) {
         createParticle(e.clientX, e.clientY);
       }
     };
@@ -133,20 +136,24 @@ const CursorEffect = () => {
     <>
       <div
         ref={cursorRef}
-        className="fixed pointer-events-none z-50 rounded-lg border-2 border-slate-900 dark:border-white transition-all duration-75 ease-out opacity-0 hidden md:block"
+        className="fixed pointer-events-none z-[99999] rounded-lg border-2 border-slate-900 dark:border-white opacity-0 hidden md:block"
         style={{
           width: "28px",
           height: "28px",
           transform: "translate(-50%, -50%)",
+          transition:
+            "width 0.15s ease-out, height 0.15s ease-out, background-color 0.15s ease-out, border-color 0.15s ease-out, opacity 0.15s ease-out",
         }}
       />
       <div
         ref={innerCursorRef}
-        className="fixed pointer-events-none z-50 rounded-sm transition-all duration-75 ease-out opacity-0 hidden md:block"
+        className="fixed pointer-events-none z-[99999] rounded-sm opacity-0 hidden md:block"
         style={{
           width: "8px",
           height: "8px",
           transform: "translate(-50%, -50%)",
+          transition:
+            "width 0.15s ease-out, height 0.15s ease-out, background-color 0.15s ease-out, opacity 0.15s ease-out",
         }}
       />
     </>

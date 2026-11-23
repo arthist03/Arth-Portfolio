@@ -85,7 +85,6 @@ function App() {
     <ThemeProvider>
       <div className="min-h-screen bg-[#fbfaf5] dark:bg-[#0d0e12] text-slate-900 dark:text-slate-100 transition-all duration-300 relative neo-grid-overlay">
         
-        <CursorEffect />
         <Navbar />
 
         {/* Bento Dashboard Container */}
@@ -393,6 +392,9 @@ function App() {
 
         {/* Contact Form */}
         <Contact />
+
+        {/* Global High-Priority Custom Cursor */}
+        <CursorEffect />
 
       </div>
     </ThemeProvider>

@@ -102,12 +102,13 @@ function generateSpawns(maze: number[][]): { player: Point; ghost1: Point; ghost
   return bestSpawns;
 }
 
-// BFS shortest path step finder
+// True BFS Shortest Path step finder with optional obstacle/ghost avoidance
 function findBfsStep(
   maze: number[][],
   current: Point,
   target: Point,
-  lastPos: Point | null
+  lastPos: Point | null,
+  avoidPos?: Point | null
 ): Point {
   if (current.r === target.r && current.c === target.c) return current;
 
@@ -135,6 +136,14 @@ function findBfsStep(
     const nonReversals = validMoves.filter((m) => !(m.r === lastPos.r && m.c === lastPos.c));
     if (nonReversals.length > 0) {
       candidates = nonReversals;
+    }
+  }
+
+  // Avoid clumping on other ghost if alternative path exists
+  if (avoidPos && candidates.length > 1) {
+    const nonAvoid = candidates.filter((m) => !(m.r === avoidPos.r && m.c === avoidPos.c));
+    if (nonAvoid.length > 0) {
+      candidates = nonAvoid;
     }
   }
 
@@ -209,7 +218,7 @@ export const ByteRun: React.FC = () => {
   const [isProtected, setIsProtected] = useState(true);
   const [scoreChip, setScoreChip] = useState<string | null>(null);
 
-  // Decoupled master game loop reference
+  // Master game loop reference decoupled from React render churn
   const loopRef = useRef({
     gameState: "IDLE" as "IDLE" | "PLAYING" | "WON" | "LOST",
     maze: BASE_MAZE.map((row) => [...row]),
@@ -321,6 +330,7 @@ export const ByteRun: React.FC = () => {
     setGameState("IDLE");
     setIsProtected(true);
     triggerHaptic(10);
+    containerRef.current?.focus();
   }, [triggerHaptic]);
 
   // Spawn protection timer
@@ -344,6 +354,11 @@ export const ByteRun: React.FC = () => {
       const ref = loopRef.current;
 
       if (ref.gameState !== "PLAYING") return;
+
+      // Initialize frame timers on first frame
+      if (ref.lastPlayerTime === 0) ref.lastPlayerTime = time;
+      if (ref.lastGhost1Time === 0) ref.lastGhost1Time = time;
+      if (ref.lastGhost2Time === 0) ref.lastGhost2Time = time;
 
       // 1. PLAYER TICK (Every 200ms)
       if (time - ref.lastPlayerTime >= 200) {
@@ -385,6 +400,39 @@ export const ByteRun: React.FC = () => {
             ref.playerPrev = ref.player;
             ref.player = { r: nr, c: nc };
             setPlayer({ r: nr, c: nc });
+
+            // Immediate collision check on player step (direct hit and crossover swap)
+            if (!ref.isProtected) {
+              const hitG1Direct = ref.player.r === ref.ghost1.r && ref.player.c === ref.ghost1.c;
+              const hitG1Crossover =
+                ref.ghost1Prev &&
+                ref.playerPrev &&
+                ref.player.r === ref.ghost1Prev.r &&
+                ref.player.c === ref.ghost1Prev.c &&
+                ref.ghost1.r === ref.playerPrev.r &&
+                ref.ghost1.c === ref.playerPrev.c;
+
+              const hitG2Direct =
+                ref.ghostMode === "TWO" &&
+                ref.player.r === ref.ghost2.r &&
+                ref.player.c === ref.ghost2.c;
+              const hitG2Crossover =
+                ref.ghostMode === "TWO" &&
+                ref.ghost2Prev &&
+                ref.playerPrev &&
+                ref.player.r === ref.ghost2Prev.r &&
+                ref.player.c === ref.ghost2Prev.c &&
+                ref.ghost2.r === ref.playerPrev.r &&
+                ref.ghost2.c === ref.playerPrev.c;
+
+              if (hitG1Direct || hitG1Crossover || hitG2Direct || hitG2Crossover) {
+                ref.gameState = "LOST";
+                setGameState("LOST");
+                updateHighScore(ref.score);
+                triggerHaptic(40);
+                return;
+              }
+            }
 
             // Collect dot / power-up
             const cellValue = ref.maze[nr][nc];
@@ -441,16 +489,17 @@ export const ByteRun: React.FC = () => {
         ref.ghost1 = next;
         setGhost1(next);
 
-        // Collision check
+        // Immediate collision check (direct + crossover swap)
         if (!ref.isProtected) {
-          if (
-            (ref.player.r === next.r && ref.player.c === next.c) ||
-            (ref.playerPrev &&
-              ref.playerPrev.r === next.r &&
-              ref.playerPrev.c === next.c &&
-              ref.player.r === ref.ghost1Prev.r &&
-              ref.player.c === ref.ghost1Prev.c)
-          ) {
+          const directHit = ref.player.r === next.r && ref.player.c === next.c;
+          const crossoverHit =
+            ref.playerPrev &&
+            ref.playerPrev.r === next.r &&
+            ref.playerPrev.c === next.c &&
+            ref.player.r === ref.ghost1Prev.r &&
+            ref.player.c === ref.ghost1Prev.c;
+
+          if (directHit || crossoverHit) {
             ref.gameState = "LOST";
             setGameState("LOST");
             updateHighScore(ref.score);
@@ -459,7 +508,7 @@ export const ByteRun: React.FC = () => {
           }
         }
 
-        // Evasion check
+        // Evasion bonus check
         const d1 = getBfsDistance(ref.player, next, ref.maze);
         if (d1 === 1 && ref.closeGhost === null) {
           ref.closeGhost = 1;
@@ -499,7 +548,8 @@ export const ByteRun: React.FC = () => {
           target = cycle % 2 === 0 ? { r: 1, c: 7 } : { r: 7, c: 1 };
         }
 
-        const next = findBfsStep(ref.maze, ref.ghost2, target, ref.ghost2Prev);
+        // Avoid stepping onto Ghost 1's position to prevent merging
+        const next = findBfsStep(ref.maze, ref.ghost2, target, ref.ghost2Prev, ref.ghost1);
 
         if (next.r < ref.ghost2.r) setGhost2Dir("UP");
         else if (next.r > ref.ghost2.r) setGhost2Dir("DOWN");
@@ -510,16 +560,17 @@ export const ByteRun: React.FC = () => {
         ref.ghost2 = next;
         setGhost2(next);
 
-        // Collision check
+        // Immediate collision check (direct + crossover swap)
         if (!ref.isProtected) {
-          if (
-            (ref.player.r === next.r && ref.player.c === next.c) ||
-            (ref.playerPrev &&
-              ref.playerPrev.r === next.r &&
-              ref.playerPrev.c === next.c &&
-              ref.player.r === ref.ghost2Prev.r &&
-              ref.player.c === ref.ghost2Prev.c)
-          ) {
+          const directHit = ref.player.r === next.r && ref.player.c === next.c;
+          const crossoverHit =
+            ref.playerPrev &&
+            ref.playerPrev.r === next.r &&
+            ref.playerPrev.c === next.c &&
+            ref.player.r === ref.ghost2Prev.r &&
+            ref.player.c === ref.ghost2Prev.c;
+
+          if (directHit || crossoverHit) {
             ref.gameState = "LOST";
             setGameState("LOST");
             updateHighScore(ref.score);
@@ -577,7 +628,7 @@ export const ByteRun: React.FC = () => {
   const g1Pupil = getPupilOffset(ghost1Dir);
   const g2Pupil = getPupilOffset(ghost2Dir);
 
-  // Direction handler (auto-expands to comfortable play mode)
+  // Direction handler (auto-expands to comfortable play mode and starts immediately from IDLE)
   const handleDirButton = (dir: Direction) => {
     setIsFocused(true);
     setIsExpanded(true);
@@ -585,17 +636,28 @@ export const ByteRun: React.FC = () => {
     loopRef.current.nextDirection = dir;
     triggerHaptic(8);
     if (gameState === "IDLE") {
+      loopRef.current.direction = dir;
+      setDirection(dir);
       loopRef.current.gameState = "PLAYING";
       setGameState("PLAYING");
     }
   };
 
-  // Keyboard navigation
+  // Keyboard navigation & Enter/Space to restart
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isExpanded) {
         setIsExpanded(false);
         return;
+      }
+
+      // Enter, Space, or R restarts game immediately on loss or win
+      if (e.key === "Enter" || e.key === " " || key === "r") {
+        if (loopRef.current.gameState === "LOST" || loopRef.current.gameState === "WON") {
+          e.preventDefault();
+          resetGame();
+          return;
+        }
       }
 
       if (!isFocused && !isExpanded) return;
@@ -614,6 +676,8 @@ export const ByteRun: React.FC = () => {
         setIsExpanded(true);
         loopRef.current.nextDirection = targetDir;
         if (gameState === "IDLE") {
+          loopRef.current.direction = targetDir;
+          setDirection(targetDir);
           loopRef.current.gameState = "PLAYING";
           setGameState("PLAYING");
         }
@@ -622,7 +686,7 @@ export const ByteRun: React.FC = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isFocused, isExpanded, gameState]);
+  }, [isFocused, isExpanded, gameState, resetGame]);
 
   // Touch handlers with real-time drag gestures
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -638,7 +702,6 @@ export const ByteRun: React.FC = () => {
     const dx = touch.clientX - touchStartRef.current.x;
     const dy = touch.clientY - touchStartRef.current.y;
 
-    // Real-time gesture trigger threshold (>14px)
     if (Math.hypot(dx, dy) >= 14) {
       let targetDir: Direction = null;
       if (Math.abs(dx) > Math.abs(dy)) {
@@ -651,10 +714,11 @@ export const ByteRun: React.FC = () => {
         loopRef.current.nextDirection = targetDir;
         triggerHaptic(8);
         if (gameState === "IDLE") {
+          loopRef.current.direction = targetDir;
+          setDirection(targetDir);
           loopRef.current.gameState = "PLAYING";
           setGameState("PLAYING");
         }
-        // Continuous swipe tracking: reset origin to current touch point
         touchStartRef.current = { x: touch.clientX, y: touch.clientY };
       }
     }
@@ -679,12 +743,19 @@ export const ByteRun: React.FC = () => {
         tabIndex={0}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
+        onMouseEnter={() => setIsFocused(true)}
+        onMouseLeave={() => {
+          if (gameState === "IDLE" && !isExpanded) {
+            setIsFocused(false);
+          }
+        }}
         onClick={() => setIsFocused(true)}
-        className={`select-none outline-none transition-all duration-300 ease-out touch-manipulation ${
+        className={`select-none outline-none transition-all duration-300 ease-out touch-manipulation relative z-40 ${
           isExpanded
-            ? "fixed inset-x-2.5 bottom-3.5 sm:inset-x-auto sm:bottom-5 sm:right-5 sm:w-[360px] z-50 origin-bottom-right"
-            : "my-8 mx-auto w-[min(240px,calc(100vw-32px))] md:my-0 md:fixed md:bottom-5 md:right-5 md:z-40"
+            ? "fixed inset-x-2.5 bottom-3.5 sm:inset-x-auto sm:bottom-5 sm:right-5 sm:w-[360px] !z-50 origin-bottom-right"
+            : "my-8 mx-auto w-[min(240px,calc(100vw-32px))] md:my-0 md:fixed md:bottom-5 md:right-5"
         }`}
+        data-byte-run="true"
         aria-label="Byte Run mini arcade game widget"
       >
         <div
@@ -729,7 +800,7 @@ export const ByteRun: React.FC = () => {
                   </span>
                 )}
 
-                {/* Subtle Evasion / Power-up Floating Chip */}
+                {/* Floating Score Feedback Chip */}
                 {scoreChip && (
                   <span className="absolute -top-4 right-0 text-[8px] font-mono-code font-bold bg-amber-400 text-slate-950 px-1 py-0.2 rounded border border-slate-900 shadow-[1px_1px_0px_0px_#0f172a] animate-bounce z-10">
                     {scoreChip}
@@ -737,17 +808,18 @@ export const ByteRun: React.FC = () => {
                 )}
               </div>
 
-              {/* Ghost Count Toggle: 1 Bug vs 2 Bugs */}
+              {/* Ghost Mode Toggle: 1 Bug vs 2 Bugs */}
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   setGhostMode((prev) => (prev === "TWO" ? "ONE" : "TWO"));
                   triggerHaptic(10);
+                  containerRef.current?.focus();
                 }}
                 aria-label={ghostMode === "TWO" ? "Switch to 1 Ghost" : "Switch to 2 Ghosts"}
                 title={ghostMode === "TWO" ? "Current: 2 Bugs (Tap for 1 Bug)" : "Current: 1 Bug (Tap for 2 Bugs)"}
-                className={`px-1.5 py-0.5 rounded text-[9px] font-mono-code font-bold border transition-colors touch-manipulation ${
+                className={`px-1.5 py-0.5 rounded text-[9px] font-mono-code font-bold border transition-colors touch-manipulation cursor-pointer ${
                   ghostMode === "TWO"
                     ? "bg-amber-100 dark:bg-amber-950/60 border-amber-500 text-amber-700 dark:text-amber-300"
                     : "bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300"
@@ -772,10 +844,11 @@ export const ByteRun: React.FC = () => {
                   setIsExpanded((prev) => !prev);
                   setIsFocused(true);
                   triggerHaptic(10);
+                  containerRef.current?.focus();
                 }}
                 aria-label={isExpanded ? "Collapse to mini size" : "Enlarge game screen"}
                 title={isExpanded ? "Collapse (Esc)" : "Expand into larger playable screen"}
-                className="p-1 sm:p-1.5 rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-90 transition-all touch-manipulation"
+                className="p-1 sm:p-1.5 rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-90 transition-all touch-manipulation cursor-pointer"
               >
                 {isExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
               </button>
@@ -854,11 +927,11 @@ export const ByteRun: React.FC = () => {
                 })
               )}
 
-              {/* Player: Minimalist Pac-Man with butter-smooth transition */}
+              {/* Player: Minimalist Pac-Man */}
               <g
                 style={{
                   transform: `translate(${player.c * CELL_SIZE + 10}px, ${player.r * CELL_SIZE + 10}px)`,
-                  transition: "transform 0.19s cubic-bezier(0.25, 0.1, 0.25, 1)",
+                  transition: gameState === "PLAYING" ? "transform 0.19s cubic-bezier(0.25, 0.1, 0.25, 1)" : "none",
                 }}
               >
                 <g
@@ -901,11 +974,11 @@ export const ByteRun: React.FC = () => {
                 )}
               </g>
 
-              {/* Ghost 1: The Chaser (Red Bug) with continuous smooth glide */}
+              {/* Ghost 1: The Chaser (Red Bug) */}
               <g
                 style={{
                   transform: `translate(${ghost1.c * CELL_SIZE + 10}px, ${ghost1.r * CELL_SIZE + 10}px)`,
-                  transition: "transform 0.26s cubic-bezier(0.25, 0.1, 0.25, 1)",
+                  transition: gameState === "PLAYING" ? "transform 0.26s cubic-bezier(0.25, 0.1, 0.25, 1)" : "none",
                 }}
               >
                 {/* Antennae */}
@@ -943,7 +1016,7 @@ export const ByteRun: React.FC = () => {
                 <g
                   style={{
                     transform: `translate(${ghost2.c * CELL_SIZE + 10}px, ${ghost2.r * CELL_SIZE + 10}px)`,
-                    transition: "transform 0.29s cubic-bezier(0.25, 0.1, 0.25, 1)",
+                    transition: gameState === "PLAYING" ? "transform 0.29s cubic-bezier(0.25, 0.1, 0.25, 1)" : "none",
                   }}
                 >
                   {/* Antennae */}
@@ -980,7 +1053,7 @@ export const ByteRun: React.FC = () => {
 
             {/* Victory Overlay */}
             {gameState === "WON" && (
-              <div className="absolute inset-0 bg-emerald-600/95 flex flex-col items-center justify-center p-3 text-center text-white backdrop-blur-[1px] animate-in fade-in duration-200">
+              <div className="absolute inset-0 bg-emerald-600/95 flex flex-col items-center justify-center p-3 text-center text-white backdrop-blur-[1px] animate-in fade-in duration-200 z-20">
                 <span className={`font-black uppercase font-mono-code tracking-wider ${isExpanded ? "text-xs sm:text-sm" : "text-[10px]"}`}>
                   Challenge completed.
                 </span>
@@ -988,11 +1061,13 @@ export const ByteRun: React.FC = () => {
                   Score: {score} (+100 Bonus)
                 </span>
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     resetGame();
+                    containerRef.current?.focus();
                   }}
-                  className={`mt-2 font-mono-code font-bold uppercase bg-white text-slate-900 rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-slate-100 active:scale-95 transition-all touch-manipulation ${
+                  className={`mt-2 font-mono-code font-bold uppercase bg-white text-slate-900 rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-slate-100 active:scale-95 transition-all touch-manipulation cursor-pointer relative z-30 ${
                     isExpanded ? "px-4 py-1.5 text-xs" : "px-2.5 py-0.5 text-[9px]"
                   }`}
                 >
@@ -1003,7 +1078,7 @@ export const ByteRun: React.FC = () => {
 
             {/* Game Over Overlay */}
             {gameState === "LOST" && (
-              <div className="absolute inset-0 bg-slate-900/90 dark:bg-black/95 flex flex-col items-center justify-center p-3 text-center text-white backdrop-blur-[1px] animate-in fade-in duration-200">
+              <div className="absolute inset-0 bg-slate-900/90 dark:bg-black/95 flex flex-col items-center justify-center p-3 text-center text-white backdrop-blur-[1px] animate-in fade-in duration-200 z-20">
                 <span className={`font-black uppercase font-mono-code text-red-400 tracking-wider ${isExpanded ? "text-xs sm:text-sm" : "text-[10px]"}`}>
                   Caught by a bug.
                 </span>
@@ -1011,11 +1086,13 @@ export const ByteRun: React.FC = () => {
                   Final Score: {score}
                 </span>
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     resetGame();
+                    containerRef.current?.focus();
                   }}
-                  className={`mt-2 font-mono-code font-bold uppercase bg-yellow-400 text-slate-950 rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-300 active:scale-95 transition-all touch-manipulation ${
+                  className={`mt-2 font-mono-code font-bold uppercase bg-yellow-400 text-slate-950 rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-300 active:scale-95 transition-all touch-manipulation cursor-pointer relative z-30 ${
                     isExpanded ? "px-4 py-1.5 text-xs" : "px-2.5 py-0.5 text-[9px]"
                   }`}
                 >
@@ -1051,17 +1128,18 @@ export const ByteRun: React.FC = () => {
           <div className={`flex items-center justify-between border-t border-slate-200 dark:border-slate-800 font-mono-code transition-all ${
             isExpanded ? "pt-2.5 mt-2.5 sm:pt-3 sm:mt-3 text-xs" : "pt-1.5 mt-2 text-[11px]"
           }`}>
-            {/* Arrow Controls: 44px Accessible Touch Targets in expanded mode */}
+            {/* Arrow Controls */}
             <div className={`flex items-center text-slate-800 dark:text-slate-200 font-bold ${
               isExpanded ? "gap-1.5 sm:gap-2" : "gap-1"
             }`}>
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDirButton("LEFT");
                 }}
                 aria-label="Move Left"
-                className={`flex items-center justify-center rounded-lg border transition-all active:scale-90 touch-manipulation ${
+                className={`flex items-center justify-center rounded-lg border transition-all active:scale-90 touch-manipulation cursor-pointer ${
                   isExpanded
                     ? "w-10 h-10 sm:w-11 sm:h-11 min-w-[40px] min-h-[40px] text-sm sm:text-base font-black bg-slate-100 dark:bg-slate-800 border-slate-900 dark:border-slate-600 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400 hover:text-slate-950 dark:hover:bg-yellow-400 dark:hover:text-slate-950 active:translate-x-[1px] active:translate-y-[1px]"
                     : "w-6 h-6 border-transparent hover:bg-slate-200 dark:hover:bg-slate-800"
@@ -1070,12 +1148,13 @@ export const ByteRun: React.FC = () => {
                 ←
               </button>
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDirButton("UP");
                 }}
                 aria-label="Move Up"
-                className={`flex items-center justify-center rounded-lg border transition-all active:scale-90 touch-manipulation ${
+                className={`flex items-center justify-center rounded-lg border transition-all active:scale-90 touch-manipulation cursor-pointer ${
                   isExpanded
                     ? "w-10 h-10 sm:w-11 sm:h-11 min-w-[40px] min-h-[40px] text-sm sm:text-base font-black bg-slate-100 dark:bg-slate-800 border-slate-900 dark:border-slate-600 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400 hover:text-slate-950 dark:hover:bg-yellow-400 dark:hover:text-slate-950 active:translate-x-[1px] active:translate-y-[1px]"
                     : "w-6 h-6 border-transparent hover:bg-slate-200 dark:hover:bg-slate-800"
@@ -1084,12 +1163,13 @@ export const ByteRun: React.FC = () => {
                 ↑
               </button>
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDirButton("DOWN");
                 }}
                 aria-label="Move Down"
-                className={`flex items-center justify-center rounded-lg border transition-all active:scale-90 touch-manipulation ${
+                className={`flex items-center justify-center rounded-lg border transition-all active:scale-90 touch-manipulation cursor-pointer ${
                   isExpanded
                     ? "w-10 h-10 sm:w-11 sm:h-11 min-w-[40px] min-h-[40px] text-sm sm:text-base font-black bg-slate-100 dark:bg-slate-800 border-slate-900 dark:border-slate-600 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400 hover:text-slate-950 dark:hover:bg-yellow-400 dark:hover:text-slate-950 active:translate-x-[1px] active:translate-y-[1px]"
                     : "w-6 h-6 border-transparent hover:bg-slate-200 dark:hover:bg-slate-800"
@@ -1098,12 +1178,13 @@ export const ByteRun: React.FC = () => {
                 ↓
               </button>
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDirButton("RIGHT");
                 }}
                 aria-label="Move Right"
-                className={`flex items-center justify-center rounded-lg border transition-all active:scale-90 touch-manipulation ${
+                className={`flex items-center justify-center rounded-lg border transition-all active:scale-90 touch-manipulation cursor-pointer ${
                   isExpanded
                     ? "w-10 h-10 sm:w-11 sm:h-11 min-w-[40px] min-h-[40px] text-sm sm:text-base font-black bg-slate-100 dark:bg-slate-800 border-slate-900 dark:border-slate-600 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400 hover:text-slate-950 dark:hover:bg-yellow-400 dark:hover:text-slate-950 active:translate-x-[1px] active:translate-y-[1px]"
                     : "w-6 h-6 border-transparent hover:bg-slate-200 dark:hover:bg-slate-800"
@@ -1116,12 +1197,14 @@ export const ByteRun: React.FC = () => {
             <div className="flex items-center gap-2">
               {/* Reset */}
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   resetGame();
+                  containerRef.current?.focus();
                 }}
                 aria-label="Restart Game"
-                className={`flex items-center gap-1 font-bold rounded-lg uppercase transition-all active:scale-95 touch-manipulation ${
+                className={`flex items-center gap-1 font-bold rounded-lg uppercase transition-all active:scale-95 touch-manipulation cursor-pointer ${
                   isExpanded
                     ? "px-3 py-2 text-[11px] sm:text-xs bg-yellow-400 dark:bg-yellow-400 text-slate-950 border-2 border-slate-900 dark:border-white shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-300"
                     : "text-[10px] text-slate-800 dark:text-slate-200 hover:text-amber-500 py-1"
