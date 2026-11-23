@@ -1,22 +1,43 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { RotateCcw, Trophy, Shield, Maximize2, Minimize2, Users, User } from "lucide-react";
+import { RotateCcw, Trophy, Shield, Maximize2, Minimize2, Users, User, Zap } from "lucide-react";
 
 type Direction = "UP" | "DOWN" | "LEFT" | "RIGHT" | null;
 type Point = { r: number; c: number };
 
-// 9x9 Balanced Connected Maze
+// 9x9 Balanced Connected Maze with Four 2x2 Obstacle Boxes (0 Dead Ends)
 // 1 = Wall, 0 = Normal Byte (+10), 2 = Empty path, 3 = Power-up Byte (+50)
 const BASE_MAZE = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1],
-  [1, 3, 0, 0, 1, 0, 0, 3, 1],
-  [1, 0, 1, 0, 0, 0, 1, 0, 1],
+  [1, 3, 0, 0, 0, 0, 0, 3, 1],
+  [1, 0, 1, 1, 0, 1, 1, 0, 1],
   [1, 0, 1, 1, 0, 1, 1, 0, 1],
   [1, 0, 0, 0, 0, 0, 0, 0, 1],
   [1, 0, 1, 1, 0, 1, 1, 0, 1],
-  [1, 0, 1, 0, 0, 0, 1, 0, 1],
+  [1, 0, 1, 1, 0, 1, 1, 0, 1],
   [1, 3, 0, 0, 0, 0, 0, 3, 1],
   [1, 1, 1, 1, 1, 1, 1, 1, 1],
 ];
+
+const CORNERS: Point[] = [
+  { r: 1, c: 1 },
+  { r: 1, c: 7 },
+  { r: 7, c: 1 },
+  { r: 7, c: 7 },
+];
+
+function getFarthestCorner(p: Point, exclude?: Point | null): Point {
+  let best = CORNERS[0];
+  let maxD = -1;
+  for (const c of CORNERS) {
+    if (exclude && c.r === exclude.r && c.c === exclude.c) continue;
+    const d = Math.abs(c.r - p.r) + Math.abs(c.c - p.c);
+    if (d > maxD) {
+      maxD = d;
+      best = c;
+    }
+  }
+  return best;
+}
 
 const CELL_SIZE = 20;
 
@@ -216,6 +237,7 @@ export const ByteRun: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [mouthOpen, setMouthOpen] = useState(true);
   const [isProtected, setIsProtected] = useState(true);
+  const [isOverclocked, setIsOverclocked] = useState(false);
   const [scoreChip, setScoreChip] = useState<string | null>(null);
 
   // Master game loop reference decoupled from React render churn
@@ -228,11 +250,14 @@ export const ByteRun: React.FC = () => {
     nextDirection: null as Direction,
     ghost1: initialSpawns.ghost1,
     ghost1Prev: null as Point | null,
+    ghost1Spawn: initialSpawns.ghost1,
     ghost2: initialSpawns.ghost2,
     ghost2Prev: null as Point | null,
+    ghost2Spawn: initialSpawns.ghost2,
     ghost2Cycle: 0,
     score: 0,
     isProtected: true,
+    overclockUntil: 0,
     ghostMode: "TWO" as "ONE" | "TWO",
     lastPlayerTime: 0,
     lastGhost1Time: 0,
@@ -308,11 +333,14 @@ export const ByteRun: React.FC = () => {
     ref.nextDirection = null;
     ref.ghost1 = spawns.ghost1;
     ref.ghost1Prev = null;
+    ref.ghost1Spawn = spawns.ghost1;
     ref.ghost2 = spawns.ghost2;
     ref.ghost2Prev = null;
+    ref.ghost2Spawn = spawns.ghost2;
     ref.ghost2Cycle = 0;
     ref.score = 0;
     ref.isProtected = true;
+    ref.overclockUntil = 0;
     ref.closeGhost = null;
     ref.evasionCooldown = 0;
     ref.lastPlayerTime = 0;
@@ -329,17 +357,18 @@ export const ByteRun: React.FC = () => {
     setScore(0);
     setGameState("IDLE");
     setIsProtected(true);
+    setIsOverclocked(false);
     triggerHaptic(10);
     containerRef.current?.focus();
   }, [triggerHaptic]);
 
-  // Spawn protection timer
+  // Spawn protection timer (3s)
   useEffect(() => {
     if (gameState === "PLAYING" && isProtected) {
       const timer = setTimeout(() => {
         setIsProtected(false);
         loopRef.current.isProtected = false;
-      }, 2500);
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [gameState, isProtected]);
@@ -360,8 +389,16 @@ export const ByteRun: React.FC = () => {
       if (ref.lastGhost1Time === 0) ref.lastGhost1Time = time;
       if (ref.lastGhost2Time === 0) ref.lastGhost2Time = time;
 
-      // 1. PLAYER TICK (Every 200ms)
-      if (time - ref.lastPlayerTime >= 200) {
+      // Handle Overclock expiration
+      if (ref.overclockUntil > 0 && time >= ref.overclockUntil) {
+        ref.overclockUntil = 0;
+        setIsOverclocked(false);
+      }
+
+      const isFleeing = time < ref.overclockUntil;
+
+      // 1. PLAYER TICK (Every 190ms - Snappy & Responsive)
+      if (time - ref.lastPlayerTime >= 190) {
         ref.lastPlayerTime = time;
 
         let dirToUse = ref.direction;
@@ -402,30 +439,58 @@ export const ByteRun: React.FC = () => {
             setPlayer({ r: nr, c: nc });
 
             // Immediate collision check on player step (direct hit and crossover swap)
-            if (!ref.isProtected) {
-              const hitG1Direct = ref.player.r === ref.ghost1.r && ref.player.c === ref.ghost1.c;
-              const hitG1Crossover =
-                ref.ghost1Prev &&
-                ref.playerPrev &&
-                ref.player.r === ref.ghost1Prev.r &&
-                ref.player.c === ref.ghost1Prev.c &&
-                ref.ghost1.r === ref.playerPrev.r &&
-                ref.ghost1.c === ref.playerPrev.c;
+            const hitG1Direct = ref.player.r === ref.ghost1.r && ref.player.c === ref.ghost1.c;
+            const hitG1Crossover =
+              ref.ghost1Prev &&
+              ref.playerPrev &&
+              ref.player.r === ref.ghost1Prev.r &&
+              ref.player.c === ref.ghost1Prev.c &&
+              ref.ghost1.r === ref.playerPrev.r &&
+              ref.ghost1.c === ref.playerPrev.c;
 
-              const hitG2Direct =
-                ref.ghostMode === "TWO" &&
-                ref.player.r === ref.ghost2.r &&
-                ref.player.c === ref.ghost2.c;
-              const hitG2Crossover =
-                ref.ghostMode === "TWO" &&
-                ref.ghost2Prev &&
-                ref.playerPrev &&
-                ref.player.r === ref.ghost2Prev.r &&
-                ref.player.c === ref.ghost2Prev.c &&
-                ref.ghost2.r === ref.playerPrev.r &&
-                ref.ghost2.c === ref.playerPrev.c;
+            const hitG2Direct =
+              ref.ghostMode === "TWO" &&
+              ref.player.r === ref.ghost2.r &&
+              ref.player.c === ref.ghost2.c;
+            const hitG2Crossover =
+              ref.ghostMode === "TWO" &&
+              ref.ghost2Prev &&
+              ref.playerPrev &&
+              ref.player.r === ref.ghost2Prev.r &&
+              ref.player.c === ref.ghost2Prev.c &&
+              ref.ghost2.r === ref.playerPrev.r &&
+              ref.ghost2.c === ref.playerPrev.c;
 
-              if (hitG1Direct || hitG1Crossover || hitG2Direct || hitG2Crossover) {
+            if (hitG1Direct || hitG1Crossover) {
+              if (isFleeing) {
+                ref.ghost1 = ref.ghost1Spawn;
+                ref.ghost1Prev = null;
+                setGhost1(ref.ghost1Spawn);
+                ref.score += 100;
+                setScore(ref.score);
+                updateHighScore(ref.score);
+                triggerScoreChip("+100 REBOOT!");
+                triggerHaptic([30, 80]);
+              } else if (!ref.isProtected) {
+                ref.gameState = "LOST";
+                setGameState("LOST");
+                updateHighScore(ref.score);
+                triggerHaptic(40);
+                return;
+              }
+            }
+
+            if (hitG2Direct || hitG2Crossover) {
+              if (isFleeing) {
+                ref.ghost2 = ref.ghost2Spawn;
+                ref.ghost2Prev = null;
+                setGhost2(ref.ghost2Spawn);
+                ref.score += 100;
+                setScore(ref.score);
+                updateHighScore(ref.score);
+                triggerScoreChip("+100 REBOOT!");
+                triggerHaptic([30, 80]);
+              } else if (!ref.isProtected) {
                 ref.gameState = "LOST";
                 setGameState("LOST");
                 updateHighScore(ref.score);
@@ -449,8 +514,10 @@ export const ByteRun: React.FC = () => {
               updateHighScore(newScore);
 
               if (cellValue === 3) {
-                triggerScoreChip("+50 BYTE");
-                triggerHaptic([15, 40, 20]);
+                ref.overclockUntil = time + 6000;
+                setIsOverclocked(true);
+                triggerScoreChip("+50 OVERCLOCK!");
+                triggerHaptic([25, 60, 25]);
               }
 
               // Win condition check
@@ -473,11 +540,12 @@ export const ByteRun: React.FC = () => {
         }
       }
 
-      // 2. GHOST 1 (Chaser - Red Bug) TICK (Every 270ms)
-      if (time - ref.lastGhost1Time >= 270) {
+      // 2. GHOST 1 (Chaser - Red Bug) TICK (300ms normal, 460ms when fleeing)
+      const g1Interval = isFleeing ? 460 : 300;
+      if (time - ref.lastGhost1Time >= g1Interval) {
         ref.lastGhost1Time = time;
 
-        const target = ref.player;
+        const target = isFleeing ? getFarthestCorner(ref.player) : ref.player;
         const next = findBfsStep(ref.maze, ref.ghost1, target, ref.ghost1Prev);
 
         if (next.r < ref.ghost1.r) setGhost1Dir("UP");
@@ -490,16 +558,25 @@ export const ByteRun: React.FC = () => {
         setGhost1(next);
 
         // Immediate collision check (direct + crossover swap)
-        if (!ref.isProtected) {
-          const directHit = ref.player.r === next.r && ref.player.c === next.c;
-          const crossoverHit =
-            ref.playerPrev &&
-            ref.playerPrev.r === next.r &&
-            ref.playerPrev.c === next.c &&
-            ref.player.r === ref.ghost1Prev.r &&
-            ref.player.c === ref.ghost1Prev.c;
+        const directHit = ref.player.r === next.r && ref.player.c === next.c;
+        const crossoverHit =
+          ref.playerPrev &&
+          ref.playerPrev.r === next.r &&
+          ref.playerPrev.c === next.c &&
+          ref.player.r === ref.ghost1Prev.r &&
+          ref.player.c === ref.ghost1Prev.c;
 
-          if (directHit || crossoverHit) {
+        if (directHit || crossoverHit) {
+          if (isFleeing) {
+            ref.ghost1 = ref.ghost1Spawn;
+            ref.ghost1Prev = null;
+            setGhost1(ref.ghost1Spawn);
+            ref.score += 100;
+            setScore(ref.score);
+            updateHighScore(ref.score);
+            triggerScoreChip("+100 REBOOT!");
+            triggerHaptic([30, 80]);
+          } else if (!ref.isProtected) {
             ref.gameState = "LOST";
             setGameState("LOST");
             updateHighScore(ref.score);
@@ -523,17 +600,20 @@ export const ByteRun: React.FC = () => {
         }
       }
 
-      // 3. GHOST 2 (Predictor - Cyan Bug) TICK (Every 300ms, only in TWO mode)
-      if (ref.ghostMode === "TWO" && time - ref.lastGhost2Time >= 300) {
+      // 3. GHOST 2 (Predictor - Cyan Bug) TICK (340ms normal, 500ms when fleeing, only in TWO mode)
+      const g2Interval = isFleeing ? 500 : 340;
+      if (ref.ghostMode === "TWO" && time - ref.lastGhost2Time >= g2Interval) {
         ref.lastGhost2Time = time;
 
         ref.ghost2Cycle++;
         const cycle = Math.floor(ref.ghost2Cycle / 8);
         const isIntercepting = cycle % 3 !== 2;
 
-        let target: Point = ref.player;
+        let target: Point;
 
-        if (isIntercepting && ref.direction) {
+        if (isFleeing) {
+          target = getFarthestCorner(ref.player, getFarthestCorner(ref.player));
+        } else if (isIntercepting && ref.direction) {
           let pr = ref.player.r;
           let pc = ref.player.c;
           if (ref.direction === "UP") pr = Math.max(1, pr - 2);
@@ -543,6 +623,8 @@ export const ByteRun: React.FC = () => {
 
           if (ref.maze[pr][pc] !== 1) {
             target = { r: pr, c: pc };
+          } else {
+            target = ref.player;
           }
         } else {
           target = cycle % 2 === 0 ? { r: 1, c: 7 } : { r: 7, c: 1 };
@@ -561,16 +643,25 @@ export const ByteRun: React.FC = () => {
         setGhost2(next);
 
         // Immediate collision check (direct + crossover swap)
-        if (!ref.isProtected) {
-          const directHit = ref.player.r === next.r && ref.player.c === next.c;
-          const crossoverHit =
-            ref.playerPrev &&
-            ref.playerPrev.r === next.r &&
-            ref.playerPrev.c === next.c &&
-            ref.player.r === ref.ghost2Prev.r &&
-            ref.player.c === ref.ghost2Prev.c;
+        const directHit = ref.player.r === next.r && ref.player.c === next.c;
+        const crossoverHit =
+          ref.playerPrev &&
+          ref.playerPrev.r === next.r &&
+          ref.playerPrev.c === next.c &&
+          ref.player.r === ref.ghost2Prev.r &&
+          ref.player.c === ref.ghost2Prev.c;
 
-          if (directHit || crossoverHit) {
+        if (directHit || crossoverHit) {
+          if (isFleeing) {
+            ref.ghost2 = ref.ghost2Spawn;
+            ref.ghost2Prev = null;
+            setGhost2(ref.ghost2Spawn);
+            ref.score += 100;
+            setScore(ref.score);
+            updateHighScore(ref.score);
+            triggerScoreChip("+100 REBOOT!");
+            triggerHaptic([30, 80]);
+          } else if (!ref.isProtected) {
             ref.gameState = "LOST";
             setGameState("LOST");
             updateHighScore(ref.score);
@@ -773,7 +864,9 @@ export const ByteRun: React.FC = () => {
               <span
                 className={`w-2 h-2 rounded-full border border-slate-900 dark:border-white shrink-0 ${
                   gameState === "PLAYING"
-                    ? isProtected
+                    ? isOverclocked
+                      ? "bg-indigo-500 animate-ping"
+                      : isProtected
                       ? "bg-amber-400 animate-ping"
                       : "bg-emerald-400 animate-pulse"
                     : gameState === "LOST"
@@ -782,6 +875,9 @@ export const ByteRun: React.FC = () => {
                 }`}
               />
               <span className="text-[10px] sm:text-[11px]">BYTE RUN</span>
+              {isOverclocked && (
+                <span className="text-[8px] bg-indigo-600 text-white px-1 rounded font-bold animate-pulse">⚡FLEE</span>
+              )}
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -974,22 +1070,22 @@ export const ByteRun: React.FC = () => {
                 )}
               </g>
 
-              {/* Ghost 1: The Chaser (Red Bug) */}
+              {/* Ghost 1: The Chaser (Red Bug / Fleeing Indigo in Overclock) */}
               <g
                 style={{
                   transform: `translate(${ghost1.c * CELL_SIZE + 10}px, ${ghost1.r * CELL_SIZE + 10}px)`,
-                  transition: gameState === "PLAYING" ? "transform 0.26s cubic-bezier(0.25, 0.1, 0.25, 1)" : "none",
+                  transition: gameState === "PLAYING" ? (isOverclocked ? "transform 0.44s ease-out" : "transform 0.26s cubic-bezier(0.25, 0.1, 0.25, 1)") : "none",
                 }}
               >
                 {/* Antennae */}
-                <line x1="-3" y1="-7" x2="-5" y2="-9" stroke="#ef4444" strokeWidth="1.2" strokeLinecap="round" />
-                <line x1="3" y1="-7" x2="5" y2="-9" stroke="#ef4444" strokeWidth="1.2" strokeLinecap="round" />
-                <circle cx="-5" cy="-9" r="0.8" fill="#ef4444" />
-                <circle cx="5" cy="-9" r="0.8" fill="#ef4444" />
+                <line x1="-3" y1="-7" x2="-5" y2="-9" stroke={isOverclocked ? "#818cf8" : "#ef4444"} strokeWidth="1.2" strokeLinecap="round" />
+                <line x1="3" y1="-7" x2="5" y2="-9" stroke={isOverclocked ? "#818cf8" : "#ef4444"} strokeWidth="1.2" strokeLinecap="round" />
+                <circle cx="-5" cy="-9" r="0.8" fill={isOverclocked ? "#818cf8" : "#ef4444"} />
+                <circle cx="5" cy="-9" r="0.8" fill={isOverclocked ? "#818cf8" : "#ef4444"} />
                 {/* Body & Wavy Skirt */}
                 <path
                   d="M -7 7 L -7 0 A 7 7 0 0 1 7 0 L 7 7 L 4 5.2 L 1 7 L -2 5.2 L -4 7 Z"
-                  className="fill-red-500 stroke-slate-900 dark:stroke-slate-950"
+                  className={`${isOverclocked ? "fill-indigo-500 animate-pulse" : "fill-red-500"} stroke-slate-900 dark:stroke-slate-950`}
                   strokeWidth="1"
                 />
                 {/* Eyes with smooth directional tracking */}
@@ -1011,23 +1107,23 @@ export const ByteRun: React.FC = () => {
                 />
               </g>
 
-              {/* Ghost 2: The Predictor (Cyan Bug) - active in TWO mode */}
+              {/* Ghost 2: The Predictor (Cyan Bug / Fleeing Purple in Overclock) - active in TWO mode */}
               {ghostMode === "TWO" && (
                 <g
                   style={{
                     transform: `translate(${ghost2.c * CELL_SIZE + 10}px, ${ghost2.r * CELL_SIZE + 10}px)`,
-                    transition: gameState === "PLAYING" ? "transform 0.29s cubic-bezier(0.25, 0.1, 0.25, 1)" : "none",
+                    transition: gameState === "PLAYING" ? (isOverclocked ? "transform 0.48s ease-out" : "transform 0.29s cubic-bezier(0.25, 0.1, 0.25, 1)") : "none",
                   }}
                 >
                   {/* Antennae */}
-                  <line x1="-3" y1="-7" x2="-5" y2="-9" stroke="#06b6d4" strokeWidth="1.2" strokeLinecap="round" />
-                  <line x1="3" y1="-7" x2="5" y2="-9" stroke="#06b6d4" strokeWidth="1.2" strokeLinecap="round" />
-                  <circle cx="-5" cy="-9" r="0.8" fill="#06b6d4" />
-                  <circle cx="5" cy="-9" r="0.8" fill="#06b6d4" />
+                  <line x1="-3" y1="-7" x2="-5" y2="-9" stroke={isOverclocked ? "#c084fc" : "#06b6d4"} strokeWidth="1.2" strokeLinecap="round" />
+                  <line x1="3" y1="-7" x2="5" y2="-9" stroke={isOverclocked ? "#c084fc" : "#06b6d4"} strokeWidth="1.2" strokeLinecap="round" />
+                  <circle cx="-5" cy="-9" r="0.8" fill={isOverclocked ? "#c084fc" : "#06b6d4"} />
+                  <circle cx="5" cy="-9" r="0.8" fill={isOverclocked ? "#c084fc" : "#06b6d4"} />
                   {/* Body & Wavy Skirt */}
                   <path
                     d="M -7 7 L -7 0 A 7 7 0 0 1 7 0 L 7 7 L 4 5.2 L 1 7 L -2 5.2 L -4 7 Z"
-                    className="fill-cyan-500 stroke-slate-900 dark:stroke-slate-950"
+                    className={`${isOverclocked ? "fill-purple-500 animate-pulse" : "fill-cyan-500"} stroke-slate-900 dark:stroke-slate-950`}
                     strokeWidth="1"
                   />
                   {/* Eyes with smooth directional tracking */}
@@ -1103,11 +1199,22 @@ export const ByteRun: React.FC = () => {
 
             {/* Spawn Protection Active Hint */}
             {isProtected && gameState === "PLAYING" && (
-              <div className="absolute top-2 inset-x-0 text-center pointer-events-none">
+              <div className="absolute top-2 inset-x-0 text-center pointer-events-none z-10">
                 <span className={`inline-flex items-center gap-1 rounded font-mono-code font-bold bg-sky-500/90 text-white shadow-[1px_1px_0px_0px_#0f172a] ${
                   isExpanded ? "px-2.5 py-1 text-[9px] sm:text-[10px]" : "px-1.5 py-0.5 text-[8px]"
                 }`}>
                   <Shield className={isExpanded ? "w-3 h-3 inline" : "w-2.5 h-2.5 inline"} /> SPAWN SHIELD
+                </span>
+              </div>
+            )}
+
+            {/* Overclock Active Hint */}
+            {isOverclocked && gameState === "PLAYING" && (
+              <div className="absolute top-2 inset-x-0 text-center pointer-events-none z-10">
+                <span className={`inline-flex items-center gap-1 rounded font-mono-code font-bold bg-indigo-600/95 text-white shadow-[1px_1px_0px_0px_#0f172a] animate-pulse ${
+                  isExpanded ? "px-2.5 py-1 text-[9px] sm:text-[10px]" : "px-1.5 py-0.5 text-[8px]"
+                }`}>
+                  <Zap className={isExpanded ? "w-3 h-3 inline" : "w-2.5 h-2.5 inline"} /> GHOSTS FLEEING
                 </span>
               </div>
             )}
