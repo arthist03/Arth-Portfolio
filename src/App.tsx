@@ -17,6 +17,60 @@ import {
 } from "lucide-react";
 import ArthPP from '/Icon/pp.jpg';
 
+const FastGlitchText: React.FC<{
+  text: string;
+  className?: string;
+  style?: React.CSSProperties;
+}> = ({ text, className = "", style = {} }) => {
+  const [displayed, setDisplayed] = useState(text);
+  const [isGlitching, setIsGlitching] = useState(true);
+
+  useEffect(() => {
+    const chars = "01XZ_#@&%<>[]/*ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const textLen = text.length;
+    let frameId: number;
+    let start: number | null = null;
+    const duration = 280; // 280ms: very fast glitch reveal
+
+    const tick = (now: number) => {
+      if (!start) start = now;
+      const elapsed = now - start;
+      const progress = Math.min(1, elapsed / duration);
+      const resolvedCount = Math.floor(progress * textLen);
+
+      let result = "";
+      for (let i = 0; i < textLen; i++) {
+        const targetChar = text[i];
+        if (targetChar === " " || targetChar === "&" || targetChar === "\n") {
+          result += targetChar;
+        } else if (i < resolvedCount) {
+          result += targetChar;
+        } else {
+          result += chars[Math.floor(Math.random() * chars.length)];
+        }
+      }
+
+      setDisplayed(result);
+
+      if (progress < 1) {
+        frameId = requestAnimationFrame(tick);
+      } else {
+        setDisplayed(text);
+        setIsGlitching(false);
+      }
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [text]);
+
+  return (
+    <span className={`${className} ${isGlitching ? "glitch-active" : ""}`} style={style}>
+      {displayed}
+    </span>
+  );
+};
+
 function App() {
   const { scrollYProgress } = useScroll();
   const [activeFilter, setActiveFilter] = useState("ALL");
@@ -37,7 +91,7 @@ function App() {
               className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight leading-[1.08] sm:leading-[1.06] bg-gradient-to-r from-[#000000] to-[#666666] dark:from-[#FFFFFF] dark:to-[#9B9B9B] bg-clip-text text-transparent"
               style={{ textWrap: "balance" }}
             >
-              Machine Learning &amp; Biomedical Engineering
+              <FastGlitchText text="Machine Learning & Biomedical Engineering" />
             </h1>
 
             {/* Sub-headline */}
@@ -74,7 +128,7 @@ function App() {
                 {/* Title */}
                 <div>
                   <h2 className="text-2xl sm:text-3xl font-display font-black tracking-tight text-slate-900 dark:text-white uppercase">
-                    Arth Kadiya
+                    <FastGlitchText text="Arth Kadiya" />
                   </h2>
                   <p className="text-xs sm:text-sm font-mono-code font-bold uppercase text-indigo-650 dark:text-indigo-400 mt-1">
                     AI/ML & Biomedical Engineer
