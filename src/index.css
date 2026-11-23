@@ -184,3 +184,36 @@ body.dark {
 .stroke-text-white {
   -webkit-text-stroke: 2px #ffffff;
 }
+
+/* Rubber stretch elastic animation for ByteRun expand & launch */
+@keyframes rubber-elastic {
+  0% {
+    transform: scale(0.90, 0.90);
+  }
+  18% {
+    transform: scale(1.16, 0.84);
+  }
+  35% {
+    transform: scale(0.88, 1.14);
+  }
+  50% {
+    transform: scale(1.08, 0.94);
+  }
+  65% {
+    transform: scale(0.96, 1.04);
+  }
+  80% {
+    transform: scale(1.02, 0.98);
+  }
+  92% {
+    transform: scale(0.99, 1.01);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+
+.animate-rubber-elastic {
+  animation: rubber-elastic 1.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: bottom right;
+}

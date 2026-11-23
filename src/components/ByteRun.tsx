@@ -309,6 +309,10 @@ export const ByteRun: React.FC = () => {
   const [isFocused, setIsFocused] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isRubberAnimating, setIsRubberAnimating] = useState(false);
+  const [autoResize, setAutoResize] = useState(true);
+  const [autoMinimizeCountdown, setAutoMinimizeCountdown] = useState<number | null>(null);
+  const [readySeconds, setReadySeconds] = useState(0);
   const [aiMode, setAiMode] = useState<AiMode>("NEURAL");
   const [isAiVision, setIsAiVision] = useState(true);
   const [mouthOpen, setMouthOpen] = useState(true);
@@ -334,6 +338,7 @@ export const ByteRun: React.FC = () => {
     score: 0,
     isProtected: true,
     overclockUntil: 0,
+    readyUntil: 0,
     ghostMode: "TWO" as "ONE" | "TWO",
     aiMode: "NEURAL" as AiMode,
     lastPlayerTime: 0,
@@ -467,6 +472,7 @@ export const ByteRun: React.FC = () => {
     ref.score = 0;
     ref.isProtected = true;
     ref.overclockUntil = 0;
+    ref.readyUntil = 0;
     ref.closeGhost = null;
     ref.evasionCooldown = 0;
     ref.lastPlayerTime = 0;
@@ -485,9 +491,64 @@ export const ByteRun: React.FC = () => {
     setGameState("IDLE");
     setIsProtected(true);
     setIsOverclocked(false);
+    setReadySeconds(0);
+    setAutoMinimizeCountdown(null);
+    setIsRubberAnimating(false);
     triggerHaptic(10);
     containerRef.current?.focus();
-  }, [triggerHaptic]);
+  }, [aiMode, triggerHaptic]);
+
+  // Unified Game Launch with 2s Stretchy Rubber Elastic Expansion & Ready Phase
+  const triggerGameStart = useCallback(
+    (initialDir: Direction = "RIGHT") => {
+      if (autoResize && !isExpanded) {
+        setIsExpanded(true);
+      }
+      setIsRubberAnimating(true);
+      setTimeout(() => setIsRubberAnimating(false), 1900);
+
+      setReadySeconds(2);
+      loopRef.current.readyUntil = Date.now() + 2000;
+      loopRef.current.direction = initialDir;
+      loopRef.current.nextDirection = initialDir;
+      setDirection(initialDir);
+      loopRef.current.gameState = "PLAYING";
+      setGameState("PLAYING");
+      triggerHaptic([15, 30, 60]);
+    },
+    [autoResize, isExpanded, triggerHaptic]
+  );
+
+  // Auto-minimize after 5 seconds on game end (WON or LOST)
+  useEffect(() => {
+    if ((gameState === "WON" || gameState === "LOST") && isExpanded && autoResize) {
+      setAutoMinimizeCountdown(5);
+      const interval = setInterval(() => {
+        setAutoMinimizeCountdown((prev) => {
+          if (prev === null || prev <= 1) {
+            clearInterval(interval);
+            setIsExpanded(false);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    } else {
+      setAutoMinimizeCountdown(null);
+    }
+  }, [gameState, isExpanded, autoResize]);
+
+  // Ready countdown timer (2s launch phase)
+  useEffect(() => {
+    if (readySeconds > 0 && gameState === "PLAYING") {
+      const timer = setTimeout(() => {
+        setReadySeconds((prev) => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [readySeconds, gameState]);
 
   // Spawn protection timer (3s)
   useEffect(() => {
@@ -511,6 +572,17 @@ export const ByteRun: React.FC = () => {
 
       if (ref.gameState !== "PLAYING") return;
 
+      const now = Date.now();
+      const isReadying = ref.readyUntil > 0 && now < ref.readyUntil;
+
+      // When ready countdown completes, re-align frame clocks
+      if (ref.readyUntil > 0 && now >= ref.readyUntil) {
+        ref.readyUntil = 0;
+        ref.lastPlayerTime = time;
+        ref.lastGhost1Time = time;
+        ref.lastGhost2Time = time;
+      }
+
       // Initialize frame timers on first frame
       if (ref.lastPlayerTime === 0) ref.lastPlayerTime = time;
       if (ref.lastGhost1Time === 0) ref.lastGhost1Time = time;
@@ -525,7 +597,7 @@ export const ByteRun: React.FC = () => {
       const isFleeing = time < ref.overclockUntil;
 
       // 1. PLAYER TICK (Every 175ms - Snappy & Responsive)
-      if (time - ref.lastPlayerTime >= 175) {
+      if (!isReadying && time - ref.lastPlayerTime >= 175) {
         ref.lastPlayerTime = time;
 
         let dirToUse = ref.direction;
@@ -693,7 +765,7 @@ export const ByteRun: React.FC = () => {
       const g2Interval = isFleeing ? fleeG2 : Math.max(195, baseG2 - curSpeedBoost);
 
       // 2. GHOST 1 (Chaser - Gradient Pursuit Policy) TICK
-      if (time - ref.lastGhost1Time >= g1Interval) {
+      if (!isReadying && time - ref.lastGhost1Time >= g1Interval) {
         ref.lastGhost1Time = time;
 
         const target = isFleeing ? getFarthestCorner(ref.player) : ref.player;
@@ -752,7 +824,7 @@ export const ByteRun: React.FC = () => {
       }
 
       // 3. GHOST 2 (Predictor & Flanker - Vector Interception Policy) TICK
-      if (ref.ghostMode === "TWO" && time - ref.lastGhost2Time >= g2Interval) {
+      if (!isReadying && ref.ghostMode === "TWO" && time - ref.lastGhost2Time >= g2Interval) {
         ref.lastGhost2Time = time;
 
         let target: Point;
@@ -863,17 +935,14 @@ export const ByteRun: React.FC = () => {
   const g1Pupil = getPupilOffset(ghost1Dir);
   const g2Pupil = getPupilOffset(ghost2Dir);
 
-  // Direction handler (starts immediately from IDLE, preserves user's current size mode)
+  // Direction handler (starts immediately with 2s launch & elastic stretch from IDLE)
   const handleDirButton = (dir: Direction) => {
     setIsFocused(true);
     containerRef.current?.focus();
     loopRef.current.nextDirection = dir;
     triggerHaptic(8);
     if (gameState === "IDLE") {
-      loopRef.current.direction = dir;
-      setDirection(dir);
-      loopRef.current.gameState = "PLAYING";
-      setGameState("PLAYING");
+      triggerGameStart(dir);
     }
   };
 
@@ -909,17 +978,14 @@ export const ByteRun: React.FC = () => {
         e.stopPropagation();
         loopRef.current.nextDirection = targetDir;
         if (gameState === "IDLE") {
-          loopRef.current.direction = targetDir;
-          setDirection(targetDir);
-          loopRef.current.gameState = "PLAYING";
-          setGameState("PLAYING");
+          triggerGameStart(targetDir);
         }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isFocused, isExpanded, gameState, resetGame]);
+  }, [isFocused, isExpanded, gameState, resetGame, triggerGameStart]);
 
   // Touch handlers with real-time drag gestures
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -946,10 +1012,7 @@ export const ByteRun: React.FC = () => {
         loopRef.current.nextDirection = targetDir;
         triggerHaptic(8);
         if (gameState === "IDLE") {
-          loopRef.current.direction = targetDir;
-          setDirection(targetDir);
-          loopRef.current.gameState = "PLAYING";
-          setGameState("PLAYING");
+          triggerGameStart(targetDir);
         }
         touchStartRef.current = { x: touch.clientX, y: touch.clientY };
       }
@@ -1005,20 +1068,20 @@ export const ByteRun: React.FC = () => {
           }
         }}
         onClick={() => setIsFocused(true)}
-        className={`select-none outline-none transition-all duration-300 ease-out touch-manipulation fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 origin-bottom-right ${
+        className={`select-none outline-none transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] touch-manipulation fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 origin-bottom-right ${
           isExpanded
-            ? "w-[min(340px,calc(100vw-32px))]"
+            ? "w-[calc(100vw-24px)] xs:w-[380px] sm:w-[500px] md:w-[560px] max-w-[560px] max-h-[calc(100dvh-24px)] sm:max-h-[min(92vh,800px)] flex flex-col justify-end"
             : "w-[215px] sm:w-[225px]"
-        }`}
+        } ${isRubberAnimating ? "animate-rubber-elastic" : ""}`}
         data-byte-run="true"
         aria-label="Byte Run mini arcade game widget"
       >
         <div
-          className={`bg-white dark:bg-[#16171d] rounded-2xl border-3 transition-all duration-300 ${
-            isExpanded ? "p-3 sm:p-4" : "p-3"
+          className={`bg-white dark:bg-[#16171d] rounded-2xl border-3 transition-all duration-500 ${
+            isExpanded ? "p-3 sm:p-5" : "p-3"
           } ${
             isFocused || isExpanded
-              ? "border-yellow-400 dark:border-yellow-400 shadow-[6px_6px_0px_0px_#f59e0b]"
+              ? "border-yellow-400 dark:border-yellow-400 shadow-[6px_6px_0px_0px_#f59e0b] sm:shadow-[8px_8px_0px_0px_#f59e0b]"
               : "border-slate-900 dark:border-white shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#ffffff]"
           }`}
         >
@@ -1045,6 +1108,30 @@ export const ByteRun: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+              {/* Auto / Manual Resize Mode Toggle */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAutoResize((prev) => !prev);
+                  triggerHaptic(8);
+                  containerRef.current?.focus();
+                }}
+                aria-label={`Current resize mode: ${autoResize ? "AUTO" : "MANUAL"}. Tap to toggle.`}
+                title={
+                  autoResize
+                    ? "Mode: AUTO (Auto-expands on play, auto-minimizes 5s after game). Tap for Manual."
+                    : "Mode: MANUAL (Resize only via manual buttons). Tap for Auto."
+                }
+                className={`px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-mono-code font-black border flex items-center gap-0.5 transition-all active:scale-95 cursor-pointer touch-manipulation ${
+                  autoResize
+                    ? "bg-amber-50 dark:bg-amber-950/70 border-amber-500 text-amber-700 dark:text-amber-300"
+                    : "bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-500"
+                }`}
+              >
+                <span>{autoResize ? "AUTO" : "MANUAL"}</span>
+              </button>
+
               {/* AI Policy Mode Toggle (Neural / Overfit / Heuristic) */}
               <button
                 type="button"
@@ -1116,24 +1203,31 @@ export const ByteRun: React.FC = () => {
                 <Eye className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
               </button>
 
-              {/* Toggle Expand / Normal Size */}
+              {/* Toggle Expand / Normal Size (Manual Option) */}
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setIsExpanded((prev) => !prev);
+                  setIsExpanded((prev) => {
+                    const next = !prev;
+                    if (next) {
+                      setIsRubberAnimating(true);
+                      setTimeout(() => setIsRubberAnimating(false), 1800);
+                    }
+                    return next;
+                  });
                   setIsFocused(true);
                   triggerHaptic(10);
                   containerRef.current?.focus();
                 }}
                 aria-label={isExpanded ? "Collapse to compact size" : "Enlarge game screen"}
-                title={isExpanded ? "Collapse size (Esc)" : "Expand into larger screen"}
+                title={isExpanded ? "Collapse size (Esc)" : "Expand into large screen"}
                 className="p-1 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-90 transition-all touch-manipulation cursor-pointer"
               >
                 {isExpanded ? <Minimize2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <Maximize2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
               </button>
 
-              {/* Minimize to dock pill */}
+              {/* Minimize to dock pill (Manual Option) */}
               <button
                 type="button"
                 onClick={(e) => {
@@ -1190,11 +1284,14 @@ export const ByteRun: React.FC = () => {
             onTouchEnd={handleTouchEnd}
             onClick={() => {
               setIsFocused(true);
+              if (gameState === "IDLE") {
+                triggerGameStart("RIGHT");
+              }
             }}
             style={{ touchAction: "none" }}
-            className={`relative mx-auto bg-slate-50 dark:bg-[#0c0d11] rounded-xl border-2 border-slate-900 dark:border-slate-700 overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none ${
+            className={`relative mx-auto bg-slate-50 dark:bg-[#0c0d11] rounded-xl border-2 border-slate-900 dark:border-slate-700 overflow-hidden cursor-pointer transition-all duration-500 ease-out select-none ${
               isExpanded
-                ? "w-full max-w-[270px] xs:max-w-[290px] sm:max-w-[300px] aspect-square"
+                ? "w-full max-w-[320px] xs:max-w-[360px] sm:max-w-[420px] md:max-w-[460px] aspect-square"
                 : "w-[168px] h-[168px]"
             }`}
           >
@@ -1438,6 +1535,24 @@ export const ByteRun: React.FC = () => {
               )}
             </svg>
 
+            {/* 2-Second Launch & Stretchy Rubber Elastic Ready Phase */}
+            {readySeconds > 0 && gameState === "PLAYING" && (
+              <div className="absolute inset-0 bg-slate-900/65 dark:bg-black/75 backdrop-blur-[2px] flex flex-col items-center justify-center p-3 text-center z-30 animate-in fade-in duration-200 pointer-events-none">
+                <div className="bg-yellow-400 text-slate-950 px-4 py-2.5 rounded-xl border-3 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a] flex flex-col items-center gap-1 animate-rubber-elastic">
+                  <div className="flex items-center gap-1.5 font-mono-code font-black text-xs sm:text-sm tracking-wider uppercase">
+                    <Zap className="w-3.5 h-3.5 fill-current animate-bounce" />
+                    <span>GET READY!</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-mono-code text-[10px] sm:text-[11px] font-bold text-slate-900">
+                    <span>LAUNCHING IN</span>
+                    <span className="w-5 h-5 rounded-full bg-slate-950 text-yellow-400 font-black flex items-center justify-center text-xs animate-pulse">
+                      {readySeconds}s
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Victory Overlay */}
             {gameState === "WON" && (
               <div className="absolute inset-0 bg-emerald-600/95 flex flex-col items-center justify-center p-3 text-center text-white backdrop-blur-[1px] animate-in fade-in duration-200 z-20">
@@ -1460,6 +1575,24 @@ export const ByteRun: React.FC = () => {
                 >
                   Train Again ↻
                 </button>
+                {autoMinimizeCountdown !== null && (
+                  <div className="mt-2.5 flex items-center gap-2 bg-slate-900/60 dark:bg-black/60 px-2.5 py-1 rounded-md border border-white/20">
+                    <span className="font-mono-code text-[9px] sm:text-[10px] text-white">
+                      Auto-minimizing in <span className="font-bold text-yellow-300">{autoMinimizeCountdown}s</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAutoMinimizeCountdown(null);
+                        setAutoResize(false);
+                      }}
+                      className="font-mono-code text-[8.5px] font-bold uppercase text-yellow-300 hover:underline ml-1 cursor-pointer"
+                    >
+                      Stay
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1485,6 +1618,24 @@ export const ByteRun: React.FC = () => {
                 >
                   Re-Train Model ↻
                 </button>
+                {autoMinimizeCountdown !== null && (
+                  <div className="mt-2.5 flex items-center gap-2 bg-slate-900/80 dark:bg-black/85 px-2.5 py-1 rounded-md border border-slate-700">
+                    <span className="font-mono-code text-[9px] sm:text-[10px] text-slate-300">
+                      Auto-minimizing in <span className="font-bold text-yellow-400">{autoMinimizeCountdown}s</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAutoMinimizeCountdown(null);
+                        setAutoResize(false);
+                      }}
+                      className="font-mono-code text-[8.5px] font-bold uppercase text-yellow-400 hover:underline ml-1 cursor-pointer"
+                    >
+                      Stay
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1514,9 +1665,9 @@ export const ByteRun: React.FC = () => {
             {gameState === "IDLE" && (
               <div className="absolute bottom-2 inset-x-0 text-center pointer-events-none">
                 <span className={`rounded font-mono-code font-bold bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-200 border border-slate-400 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] ${
-                  isExpanded ? "px-2.5 py-0.5 text-[9px] sm:text-[10px]" : "px-1.5 py-0.5 text-[8px]"
+                  isExpanded ? "px-3 py-1 text-[10px] sm:text-xs" : "px-1.5 py-0.5 text-[8px]"
                 }`}>
-                  Swipe or keys to move
+                  Swipe, tap keys, or click to play
                 </span>
               </div>
             )}
@@ -1539,7 +1690,7 @@ export const ByteRun: React.FC = () => {
                 aria-label="Move Left"
                 className={`flex items-center justify-center rounded-lg border transition-all active:scale-90 touch-manipulation cursor-pointer ${
                   isExpanded
-                    ? "w-10 h-10 sm:w-11 sm:h-11 min-w-[40px] min-h-[40px] text-sm sm:text-base font-black bg-slate-100 dark:bg-slate-800 border-slate-900 dark:border-slate-600 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400 hover:text-slate-950 dark:hover:bg-yellow-400 dark:hover:text-slate-950 active:translate-x-[1px] active:translate-y-[1px]"
+                    ? "w-11 h-11 sm:w-12 sm:h-12 min-w-[44px] min-h-[44px] text-base sm:text-lg font-black bg-slate-100 dark:bg-slate-800 border-2 border-slate-900 dark:border-slate-600 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#ffffff] hover:bg-yellow-400 hover:text-slate-950 dark:hover:bg-yellow-400 dark:hover:text-slate-950 active:translate-x-[1px] active:translate-y-[1px]"
                     : "w-6 h-6 border-transparent hover:bg-slate-200 dark:hover:bg-slate-800"
                 }`}
               >
@@ -1554,7 +1705,7 @@ export const ByteRun: React.FC = () => {
                 aria-label="Move Up"
                 className={`flex items-center justify-center rounded-lg border transition-all active:scale-90 touch-manipulation cursor-pointer ${
                   isExpanded
-                    ? "w-10 h-10 sm:w-11 sm:h-11 min-w-[40px] min-h-[40px] text-sm sm:text-base font-black bg-slate-100 dark:bg-slate-800 border-slate-900 dark:border-slate-600 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400 hover:text-slate-950 dark:hover:bg-yellow-400 dark:hover:text-slate-950 active:translate-x-[1px] active:translate-y-[1px]"
+                    ? "w-11 h-11 sm:w-12 sm:h-12 min-w-[44px] min-h-[44px] text-base sm:text-lg font-black bg-slate-100 dark:bg-slate-800 border-2 border-slate-900 dark:border-slate-600 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#ffffff] hover:bg-yellow-400 hover:text-slate-950 dark:hover:bg-yellow-400 dark:hover:text-slate-950 active:translate-x-[1px] active:translate-y-[1px]"
                     : "w-6 h-6 border-transparent hover:bg-slate-200 dark:hover:bg-slate-800"
                 }`}
               >
@@ -1569,7 +1720,7 @@ export const ByteRun: React.FC = () => {
                 aria-label="Move Down"
                 className={`flex items-center justify-center rounded-lg border transition-all active:scale-90 touch-manipulation cursor-pointer ${
                   isExpanded
-                    ? "w-10 h-10 sm:w-11 sm:h-11 min-w-[40px] min-h-[40px] text-sm sm:text-base font-black bg-slate-100 dark:bg-slate-800 border-slate-900 dark:border-slate-600 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400 hover:text-slate-950 dark:hover:bg-yellow-400 dark:hover:text-slate-950 active:translate-x-[1px] active:translate-y-[1px]"
+                    ? "w-11 h-11 sm:w-12 sm:h-12 min-w-[44px] min-h-[44px] text-base sm:text-lg font-black bg-slate-100 dark:bg-slate-800 border-2 border-slate-900 dark:border-slate-600 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#ffffff] hover:bg-yellow-400 hover:text-slate-950 dark:hover:bg-yellow-400 dark:hover:text-slate-950 active:translate-x-[1px] active:translate-y-[1px]"
                     : "w-6 h-6 border-transparent hover:bg-slate-200 dark:hover:bg-slate-800"
                 }`}
               >
@@ -1584,7 +1735,7 @@ export const ByteRun: React.FC = () => {
                 aria-label="Move Right"
                 className={`flex items-center justify-center rounded-lg border transition-all active:scale-90 touch-manipulation cursor-pointer ${
                   isExpanded
-                    ? "w-10 h-10 sm:w-11 sm:h-11 min-w-[40px] min-h-[40px] text-sm sm:text-base font-black bg-slate-100 dark:bg-slate-800 border-slate-900 dark:border-slate-600 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400 hover:text-slate-950 dark:hover:bg-yellow-400 dark:hover:text-slate-950 active:translate-x-[1px] active:translate-y-[1px]"
+                    ? "w-11 h-11 sm:w-12 sm:h-12 min-w-[44px] min-h-[44px] text-base sm:text-lg font-black bg-slate-100 dark:bg-slate-800 border-2 border-slate-900 dark:border-slate-600 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#ffffff] hover:bg-yellow-400 hover:text-slate-950 dark:hover:bg-yellow-400 dark:hover:text-slate-950 active:translate-x-[1px] active:translate-y-[1px]"
                     : "w-6 h-6 border-transparent hover:bg-slate-200 dark:hover:bg-slate-800"
                 }`}
               >
@@ -1604,7 +1755,7 @@ export const ByteRun: React.FC = () => {
                 aria-label="Restart Game"
                 className={`flex items-center gap-1 font-bold rounded-lg uppercase transition-all active:scale-95 touch-manipulation cursor-pointer ${
                   isExpanded
-                    ? "px-3 py-2 text-[11px] sm:text-xs bg-yellow-400 dark:bg-yellow-400 text-slate-950 border-2 border-slate-900 dark:border-white shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-300"
+                    ? "px-4 py-2.5 text-xs sm:text-sm bg-yellow-400 dark:bg-yellow-400 text-slate-950 border-2 border-slate-900 dark:border-white shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-300"
                     : "text-[10px] text-slate-800 dark:text-slate-200 hover:text-amber-500 py-1"
                 }`}
               >
