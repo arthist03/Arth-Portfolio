@@ -33,36 +33,27 @@ function App() {
           {/* Header Area: Professional Editorial Visual System */}
           <header className="mb-8 sm:mb-12 max-w-[680px]">
             {/* Canonical Heading 1 with Left-to-Right Neutral Gradient */}
-            <motion.h1 
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            <h1 
               className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight leading-[1.08] sm:leading-[1.06] bg-gradient-to-r from-[#000000] to-[#666666] dark:from-[#FFFFFF] dark:to-[#9B9B9B] bg-clip-text text-transparent"
               style={{ textWrap: "balance" }}
             >
               Machine Learning &amp; Biomedical Engineering
-            </motion.h1>
+            </h1>
 
             {/* Sub-headline */}
-            <motion.p
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            <p
               className="text-base sm:text-lg text-slate-600 dark:text-[#9B9B9B] font-normal leading-relaxed mt-3 sm:mt-4 max-w-[620px]"
               style={{ textWrap: "pretty" }}
             >
               Building intelligent diagnostic algorithms, computer vision pipelines, and surgical robotics hardware for clinical healthcare.
-            </motion.p>
+            </p>
           </header>
 
           {/* Grid Layout (5 Rows total on Desktop) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 auto-rows-auto md:auto-rows-[225px]">
             
             {/* ROW 1 & 2 (LEFT): Main Hero Profile Card */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4 }}
+            <div 
               className="neobrutal-card p-5 sm:p-6 md:p-8 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 md:row-span-2 bg-amber-50 dark:bg-[#1a1c24] min-h-[280px] md:min-h-0 group hover:bg-amber-100/50 dark:hover:bg-[#1f212c] transition-all duration-300"
             >
               <div className="flex flex-col sm:flex-row items-center sm:items-start md:items-center gap-4 sm:gap-6 text-center sm:text-left">
@@ -105,13 +96,10 @@ function App() {
                 <span>// Open to engineering & research roles</span>
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse border border-slate-900" />
               </div>
-            </motion.div>
+            </div>
 
             {/* ROW 1 & 2 (RIGHT): Core Technologies Card */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.1 }}
+            <div 
               className="neobrutal-card p-5 sm:p-6 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 md:row-span-2 bg-emerald-50 dark:bg-[#13221a] min-h-[260px] md:min-h-0"
             >
               <div>
@@ -148,13 +136,10 @@ function App() {
                 <span className="w-2.5 h-2.5 bg-emerald-500 border border-slate-900 dark:border-white" />
                 // Primary Developer Stack
               </div>
-            </motion.div>
+            </div>
 
             {/* ROW 3 (LEFT): Work Highlight Card */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.15 }}
+            <div 
               className="neobrutal-card p-5 sm:p-6 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 bg-blue-50 dark:bg-[#151c2a]"
             >
               <div className="flex items-center justify-between">
@@ -171,13 +156,10 @@ function App() {
                   Developed AI algorithms for advanced Medical Robotics (2025)
                 </p>
               </div>
-            </motion.div>
+            </div>
 
             {/* ROW 3 (RIGHT): Education Highlight Card */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
+            <div 
               className="neobrutal-card p-5 sm:p-6 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 bg-orange-50 dark:bg-[#241a15]"
             >
               <div className="flex items-center justify-between">
@@ -194,13 +176,10 @@ function App() {
                   Joint Program by IIT Jodhpur and AIIMS Jodhpur (2025-27)
                 </p>
               </div>
-            </motion.div>
+            </div>
 
             {/* ROW 4 & 5 (LEFT): 3D Interactive desk Scene */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.25 }}
+            <div 
               className="neobrutal-card relative col-span-1 md:col-span-2 row-span-1 md:row-span-2 overflow-hidden flex flex-col justify-between bg-slate-50 dark:bg-[#13141a] min-h-[350px] md:min-h-0"
             >
               <div className="absolute top-4 left-6 z-20">
@@ -217,13 +196,10 @@ function App() {
                   // DRAG TO ROTATE SCENE
                 </p>
               </div>
-            </motion.div>
+            </div>
 
             {/* ROW 4 (RIGHT): Bio-Engineering Mission Card */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.3 }}
+            <div 
               className="neobrutal-card p-5 sm:p-6 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 bg-purple-50 dark:bg-[#20182c]"
             >
               <div className="flex items-center justify-between">
@@ -235,13 +211,10 @@ function App() {
               <p className="text-sm font-semibold text-slate-805 dark:text-gray-250 leading-relaxed mt-2">
                 Developing reliable medical hardware, assistive diagnostics, and practical machine learning systems for clinical settings. My work centers on medical robotics, image classification, and embedded biosignal processing.
               </p>
-            </motion.div>
+            </div>
 
             {/* ROW 5 (RIGHT): New Dedicated Bento Stats & Quick Links Card */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.35 }}
+            <div 
               className="neobrutal-card p-5 sm:p-6 flex flex-col justify-between col-span-1 md:col-span-2 row-span-1 bg-sky-50 dark:bg-[#1a2333]"
             >
               <div className="flex items-center justify-between">
@@ -295,7 +268,7 @@ function App() {
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </button>
               </div>
-            </motion.div>
+            </div>
 
           </div>
         </main>

@@ -32,10 +32,8 @@ const Navbar = () => {
 
   return (
     <>
-      <motion.nav
-        initial={{ y: -100, x: "-50%" }}
-        animate={{ y: 0, x: "-50%" }}
-        className={`fixed top-4 left-1/2 z-50 w-[92%] max-w-5xl rounded-xl transition-all duration-300 border-[3px] border-slate-900 dark:border-white ${
+      <nav
+        className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-5xl rounded-xl transition-all duration-300 border-[3px] border-slate-900 dark:border-white ${
           isScrolled
             ? "bg-white dark:bg-gray-900 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#ffffff] py-2 px-6"
             : "bg-white/90 dark:bg-gray-900/90 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#ffffff] py-3 px-6"
@@ -87,7 +85,7 @@ const Navbar = () => {
             </motion.button>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
       {/* Mobile Menu Backdrop & Dropdown */}
       <AnimatePresence>
