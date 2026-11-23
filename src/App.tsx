@@ -356,9 +356,6 @@ function App() {
             </motion.div>
 
           </div>
-
-          {/* Byte Run Mini Pac-Man Game Widget */}
-          <ByteRun />
         </main>
 
         {/* Detailed Timeline Sections */}
@@ -392,6 +389,9 @@ function App() {
 
         {/* Contact Form */}
         <Contact />
+
+        {/* Floating Mini Arcade Game Widget */}
+        <ByteRun />
 
         {/* Global High-Priority Custom Cursor */}
         <CursorEffect />

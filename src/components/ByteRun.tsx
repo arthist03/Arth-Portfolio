@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { RotateCcw, Trophy, Shield, Maximize2, Minimize2, Users, User, Zap } from "lucide-react";
+import { RotateCcw, Trophy, Shield, Maximize2, Minimize2, Users, User, Zap, Minus } from "lucide-react";
 
 type Direction = "UP" | "DOWN" | "LEFT" | "RIGHT" | null;
 type Point = { r: number; c: number };
@@ -235,6 +235,7 @@ export const ByteRun: React.FC = () => {
   const [gameState, setGameState] = useState<"IDLE" | "PLAYING" | "WON" | "LOST">("IDLE");
   const [isFocused, setIsFocused] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const [mouthOpen, setMouthOpen] = useState(true);
   const [isProtected, setIsProtected] = useState(true);
   const [isOverclocked, setIsOverclocked] = useState(false);
@@ -719,10 +720,9 @@ export const ByteRun: React.FC = () => {
   const g1Pupil = getPupilOffset(ghost1Dir);
   const g2Pupil = getPupilOffset(ghost2Dir);
 
-  // Direction handler (auto-expands to comfortable play mode and starts immediately from IDLE)
+  // Direction handler (starts immediately from IDLE, preserves user's current size mode)
   const handleDirButton = (dir: Direction) => {
     setIsFocused(true);
-    setIsExpanded(true);
     containerRef.current?.focus();
     loopRef.current.nextDirection = dir;
     triggerHaptic(8);
@@ -743,7 +743,7 @@ export const ByteRun: React.FC = () => {
       }
 
       // Enter, Space, or R restarts game immediately on loss or win
-      if (e.key === "Enter" || e.key === " " || key === "r") {
+      if (e.key === "Enter" || e.key === " " || e.key.toLowerCase() === "r") {
         if (loopRef.current.gameState === "LOST" || loopRef.current.gameState === "WON") {
           e.preventDefault();
           resetGame();
@@ -764,7 +764,6 @@ export const ByteRun: React.FC = () => {
       if (targetDir) {
         e.preventDefault();
         e.stopPropagation();
-        setIsExpanded(true);
         loopRef.current.nextDirection = targetDir;
         if (gameState === "IDLE") {
           loopRef.current.direction = targetDir;
@@ -784,7 +783,6 @@ export const ByteRun: React.FC = () => {
     const touch = e.touches[0];
     touchStartRef.current = { x: touch.clientX, y: touch.clientY };
     setIsFocused(true);
-    setIsExpanded(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -819,12 +817,32 @@ export const ByteRun: React.FC = () => {
     touchStartRef.current = null;
   };
 
+  if (isMinimized) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setIsMinimized(false);
+          setIsFocused(true);
+        }}
+        aria-label="Open Byte Run mini game"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center gap-2 px-3.5 py-2 bg-yellow-400 dark:bg-yellow-400 text-slate-900 border-2 border-slate-900 dark:border-white rounded-xl font-mono-code text-[11px] sm:text-xs font-black uppercase shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#ffffff] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_#0f172a] transition-all cursor-pointer active:scale-95"
+      >
+        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse border border-slate-900 shrink-0" />
+        <span>BYTE RUN</span>
+        <span className="text-[9px] bg-slate-900 text-yellow-300 px-1.5 py-0.5 rounded font-mono-code font-bold">
+          PLAY
+        </span>
+      </button>
+    );
+  }
+
   return (
     <>
-      {/* Mobile Backdrop when expanded */}
+      {/* Mobile Backdrop when expanded on very small screens */}
       {isExpanded && (
         <div
-          className="fixed inset-0 bg-slate-950/45 dark:bg-black/65 backdrop-blur-[2px] z-40 md:hidden animate-in fade-in duration-200"
+          className="fixed inset-0 bg-slate-950/45 dark:bg-black/65 backdrop-blur-[2px] z-40 sm:hidden animate-in fade-in duration-200"
           onClick={() => setIsExpanded(false)}
         />
       )}
@@ -841,10 +859,10 @@ export const ByteRun: React.FC = () => {
           }
         }}
         onClick={() => setIsFocused(true)}
-        className={`select-none outline-none transition-all duration-300 ease-out touch-manipulation relative z-40 ${
+        className={`select-none outline-none transition-all duration-300 ease-out touch-manipulation fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 origin-bottom-right ${
           isExpanded
-            ? "fixed inset-x-2.5 bottom-3.5 sm:inset-x-auto sm:bottom-5 sm:right-5 sm:w-[360px] !z-50 origin-bottom-right"
-            : "my-8 mx-auto w-[min(240px,calc(100vw-32px))] md:my-0 md:fixed md:bottom-5 md:right-5"
+            ? "w-[min(340px,calc(100vw-32px))]"
+            : "w-[215px] sm:w-[225px]"
         }`}
         data-byte-run="true"
         aria-label="Byte Run mini arcade game widget"
@@ -932,7 +950,7 @@ export const ByteRun: React.FC = () => {
                 )}
               </button>
 
-              {/* Toggle Expand / Minimize Size */}
+              {/* Toggle Expand / Normal Size */}
               <button
                 type="button"
                 onClick={(e) => {
@@ -942,11 +960,26 @@ export const ByteRun: React.FC = () => {
                   triggerHaptic(10);
                   containerRef.current?.focus();
                 }}
-                aria-label={isExpanded ? "Collapse to mini size" : "Enlarge game screen"}
-                title={isExpanded ? "Collapse (Esc)" : "Expand into larger playable screen"}
+                aria-label={isExpanded ? "Collapse to compact size" : "Enlarge game screen"}
+                title={isExpanded ? "Collapse size (Esc)" : "Expand into larger screen"}
                 className="p-1 sm:p-1.5 rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-90 transition-all touch-manipulation cursor-pointer"
               >
                 {isExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+              </button>
+
+              {/* Minimize to dock pill */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMinimized(true);
+                  triggerHaptic(10);
+                }}
+                aria-label="Minimize game to badge"
+                title="Minimize to floating pill"
+                className="p-1 sm:p-1.5 rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-90 transition-all touch-manipulation cursor-pointer"
+              >
+                <Minus className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -957,14 +990,13 @@ export const ByteRun: React.FC = () => {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             onClick={() => {
-              if (!isExpanded) setIsExpanded(true);
               setIsFocused(true);
             }}
             style={{ touchAction: "none" }}
             className={`relative mx-auto bg-slate-50 dark:bg-[#0c0d11] rounded-xl border-2 border-slate-900 dark:border-slate-700 overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none ${
               isExpanded
-                ? "w-full max-w-[270px] xs:max-w-[290px] sm:max-w-[316px] aspect-square"
-                : "w-[180px] h-[180px]"
+                ? "w-full max-w-[270px] xs:max-w-[290px] sm:max-w-[300px] aspect-square"
+                : "w-[168px] h-[168px]"
             }`}
           >
             <svg viewBox="0 0 180 180" className="w-full h-full block">
