@@ -32,22 +32,11 @@ function App() {
           
           {/* Header Area: Professional Editorial Visual System */}
           <header className="mb-8 sm:mb-12 max-w-[680px]">
-            {/* Subtle High-Craft Metadata Pill */}
-            <motion.div 
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-slate-300 dark:border-[#272727] bg-white/90 dark:bg-[#181818]/90 text-slate-800 dark:text-[#9B9B9B] font-mono-code text-[11px] sm:text-xs font-medium tracking-wide mb-3 sm:mb-4 shadow-sm"
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span>AI/ML &amp; Biomedical Engineering</span>
-            </motion.div>
-
             {/* Canonical Heading 1 with Left-to-Right Neutral Gradient */}
             <motion.h1 
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight leading-[1.08] sm:leading-[1.06] bg-gradient-to-r from-[#000000] to-[#666666] dark:from-[#FFFFFF] dark:to-[#9B9B9B] bg-clip-text text-transparent"
               style={{ textWrap: "balance" }}
             >
@@ -58,7 +47,7 @@ function App() {
             <motion.p
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
               className="text-base sm:text-lg text-slate-600 dark:text-[#9B9B9B] font-normal leading-relaxed mt-3 sm:mt-4 max-w-[620px]"
               style={{ textWrap: "pretty" }}
             >
