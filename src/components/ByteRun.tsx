@@ -1,92 +1,85 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { RotateCcw, Trophy, Shield, Maximize2, Minimize2, Users, User, Zap, Minus, Brain, Activity } from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { RotateCcw, Trophy, Shield, Maximize2, Minimize2, Zap, Minus } from "lucide-react";
 
 type Direction = "UP" | "DOWN" | "LEFT" | "RIGHT" | null;
 type Point = { r: number; c: number };
-type AiMode = "NEURAL" | "OVERFIT" | "HEURISTIC";
 
-// 9x9 Balanced Connected Mazes (6 Distinct Layouts, 0 Dead Ends, 100% Reachable)
-// 1 = Wall, 0 = Normal Byte (+10), 2 = Empty path, 3 = Power-up Byte (+50)
+const GRID_SIZE = 15;
+const CELL_SIZE = 16; // 15 * 16 = 240px SVG viewBox
+
+// 15x15 Authentic Pac-Man Mazes (3 Verified Connected Layouts, Wrap Tunnels on Row 7)
+// 1 = Wall, 0 = Pac-Dot (+10), 2 = Empty path, 3 = Power Pellet (+50)
 const MAZE_PRESETS: number[][][] = [
-  // 0: Four Neobrutal Blocks
+  // 0: Classic Double-Corridor with Center Vault & Side Tunnels
   [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 3, 0, 0, 0, 0, 0, 3, 1],
-    [1, 0, 1, 1, 0, 1, 1, 0, 1],
-    [1, 0, 1, 1, 0, 1, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 0, 1, 1, 0, 1],
-    [1, 0, 1, 1, 0, 1, 1, 0, 1],
-    [1, 3, 0, 0, 0, 0, 0, 3, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 3, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 3, 1],
+    [1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1],
+    [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+    [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0], // Wrap Tunnel Row
+    [1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1],
+    [1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1],
+    [1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1],
+    [1, 3, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 3, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   ],
-  // 1: Center Diamond & Cross
+  // 1: Center Cross & Open Ring with Side Tunnels
   [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 3, 0, 0, 0, 0, 0, 3, 1],
-    [1, 0, 1, 0, 0, 0, 1, 0, 1],
-    [1, 0, 0, 1, 0, 1, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 1, 0, 1, 0, 0, 1],
-    [1, 0, 1, 0, 0, 0, 1, 0, 1],
-    [1, 3, 0, 0, 0, 0, 0, 3, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 3, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 3, 1],
+    [1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1],
+    [1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1],
+    [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1],
+    [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1],
+    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0], // Wrap Tunnel Row
+    [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1],
+    [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1],
+    [1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1],
+    [1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1],
+    [1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1],
+    [1, 3, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 3, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   ],
-  // 2: Dual Central Pillars & Loops
+  // 2: Wide Lanes, Inner Sanctuary & Dual Pillar Loops
   [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 3, 0, 0, 0, 0, 0, 3, 1],
-    [1, 0, 1, 1, 0, 1, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 0, 1, 0, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 0, 1, 1, 0, 1],
-    [1, 3, 0, 0, 0, 0, 0, 3, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-  ],
-  // 3: The Sanctuary / Inner Orbit
-  [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 3, 0, 0, 0, 0, 0, 3, 1],
-    [1, 0, 1, 1, 0, 1, 1, 0, 1],
-    [1, 0, 1, 0, 0, 0, 1, 0, 1],
-    [1, 0, 0, 0, 1, 0, 0, 0, 1],
-    [1, 0, 1, 0, 0, 0, 1, 0, 1],
-    [1, 0, 1, 1, 0, 1, 1, 0, 1],
-    [1, 3, 0, 0, 0, 0, 0, 3, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-  ],
-  // 4: Four L-Brackets
-  [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 3, 0, 0, 0, 0, 0, 3, 1],
-    [1, 0, 1, 0, 0, 0, 1, 0, 1],
-    [1, 0, 1, 0, 1, 0, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 0, 1, 0, 1, 0, 1],
-    [1, 0, 1, 0, 0, 0, 1, 0, 1],
-    [1, 3, 0, 0, 0, 0, 0, 3, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-  ],
-  // 5: Double Horizon
-  [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 3, 0, 0, 0, 0, 0, 3, 1],
-    [1, 0, 1, 1, 0, 1, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 0, 1, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 0, 1, 1, 0, 1],
-    [1, 3, 0, 0, 0, 0, 0, 3, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1],
+    [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1],
+    [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1],
+    [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0], // Wrap Tunnel Row
+    [1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1],
+    [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+    [1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1],
+    [1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1],
+    [1, 3, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   ],
 ];
 
+// Scatter corners for the 4 classic ghosts
+const SCATTER_CORNERS = {
+  blinky: { r: 1, c: 13 }, // Red: Top-Right
+  pinky: { r: 1, c: 1 },   // Pink: Top-Left
+  inky: { r: 13, c: 13 },  // Cyan: Bottom-Right
+  clyde: { r: 13, c: 1 },  // Orange: Bottom-Left
+};
+
+// Power Pellet Corners
 const CORNERS: Point[] = [
   { r: 1, c: 1 },
-  { r: 1, c: 7 },
-  { r: 7, c: 1 },
-  { r: 7, c: 7 },
+  { r: 1, c: 13 },
+  { r: 13, c: 1 },
+  { r: 13, c: 13 },
 ];
 
 function getFarthestCorner(p: Point, exclude?: Point | null): Point {
@@ -103,25 +96,28 @@ function getFarthestCorner(p: Point, exclude?: Point | null): Point {
   return best;
 }
 
-const CELL_SIZE = 20;
-
-function getWalkableCells(maze: number[][]): Point[] {
-  const cells: Point[] = [];
-  for (let r = 0; r < 9; r++) {
-    for (let c = 0; c < 9; c++) {
-      if (maze[r][c] !== 1) {
-        cells.push({ r, c });
-      }
-    }
-  }
-  return cells;
+// Fixed balanced spawns for 15x15 grid (verified walkable in all 3 mazes)
+function getFixedSpawns(): {
+  player: Point;
+  blinky: Point;
+  pinky: Point;
+  inky: Point;
+  clyde: Point;
+} {
+  return {
+    player: { r: 11, c: 7 }, // Lower center
+    blinky: { r: 3, c: 7 },  // Upper center (direct chase)
+    pinky: { r: 4, c: 3 },   // Upper left (ambush ahead)
+    inky: { r: 4, c: 11 },   // Upper right (vector intercept)
+    clyde: { r: 10, c: 1 },  // Lower left (chase & retreat)
+  };
 }
 
-// Lightweight BFS Distance
+// Tunnel-aware BFS step distance
 function getBfsDistance(start: Point, end: Point, maze: number[][]): number {
   if (start.r === end.r && start.c === end.c) return 0;
   const queue: { r: number; c: number; d: number }[] = [{ r: start.r, c: start.c, d: 0 }];
-  const visited = Array.from({ length: 9 }, () => Array(9).fill(false));
+  const visited = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(false));
   visited[start.r][start.c] = true;
 
   const directions = [
@@ -136,9 +132,14 @@ function getBfsDistance(start: Point, end: Point, maze: number[][]): number {
     if (r === end.r && c === end.c) return d;
 
     for (const dir of directions) {
-      const nr = r + dir.r;
-      const nc = c + dir.c;
-      if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9 && maze[nr][nc] !== 1 && !visited[nr][nc]) {
+      let nr = r + dir.r;
+      let nc = c + dir.c;
+      // Wrap tunnel on row 7
+      if (r === 7 && nr === 7) {
+        if (nc < 0) nc = GRID_SIZE - 1;
+        else if (nc >= GRID_SIZE) nc = 0;
+      }
+      if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && maze[nr][nc] !== 1 && !visited[nr][nc]) {
         visited[nr][nc] = true;
         queue.push({ r: nr, c: nc, d: d + 1 });
       }
@@ -147,53 +148,13 @@ function getBfsDistance(start: Point, end: Point, maze: number[][]): number {
   return 999;
 }
 
-// Validated random spawn points with minimum 4-tile ghost separation in classic corners
-function generateSpawns(maze: number[][]): {
-  player: Point;
-  blinky: Point;
-  pinky: Point;
-  inky: Point;
-  clyde: Point;
-} {
-  const walkable = getWalkableCells(maze);
-  const centerCandidates = [{ r: 4, c: 4 }, { r: 4, c: 3 }, { r: 4, c: 5 }, { r: 3, c: 4 }, { r: 5, c: 4 }]
-    .filter((p) => maze[p.r][p.c] !== 1);
-  const playerSpawn = centerCandidates.length > 0 ? centerCandidates[0] : walkable[0];
-
-  // Blinky: Top-right quadrant
-  const blinkyList = walkable.filter(
-    (p) => p.r <= 3 && p.c >= 5 && getBfsDistance(playerSpawn, p, maze) >= 4
-  );
-  const blinky = blinkyList.length > 0 ? blinkyList[Math.floor(Math.random() * blinkyList.length)] : { r: 1, c: 7 };
-
-  // Pinky: Top-left quadrant
-  const pinkyList = walkable.filter(
-    (p) => p.r <= 3 && p.c <= 3 && !(p.r === blinky.r && p.c === blinky.c) && getBfsDistance(playerSpawn, p, maze) >= 4
-  );
-  const pinky = pinkyList.length > 0 ? pinkyList[Math.floor(Math.random() * pinkyList.length)] : { r: 1, c: 1 };
-
-  // Inky: Bottom-right quadrant
-  const inkyList = walkable.filter(
-    (p) => p.r >= 5 && p.c >= 5 && !(p.r === blinky.r && p.c === blinky.c) && getBfsDistance(playerSpawn, p, maze) >= 4
-  );
-  const inky = inkyList.length > 0 ? inkyList[Math.floor(Math.random() * inkyList.length)] : { r: 7, c: 7 };
-
-  // Clyde: Bottom-left quadrant
-  const clydeList = walkable.filter(
-    (p) => p.r >= 5 && p.c <= 3 && !(p.r === pinky.r && p.c === pinky.c) && getBfsDistance(playerSpawn, p, maze) >= 4
-  );
-  const clyde = clydeList.length > 0 ? clydeList[Math.floor(Math.random() * clydeList.length)] : { r: 7, c: 1 };
-
-  return { player: playerSpawn, blinky, pinky, inky, clyde };
-}
-
-// True BFS Shortest Path step finder with optional obstacle/ghost avoidance
+// Tunnel-aware BFS next-step finder
 function findBfsStep(
   maze: number[][],
   current: Point,
   target: Point,
   lastPos: Point | null,
-  avoidPos?: Point | Point[] | null
+  avoidPos?: Point[] | null
 ): Point {
   if (current.r === target.r && current.c === target.c) return current;
 
@@ -206,9 +167,14 @@ function findBfsStep(
 
   const validMoves: Point[] = [];
   for (const d of directions) {
-    const nr = current.r + d.r;
-    const nc = current.c + d.c;
-    if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9 && maze[nr][nc] !== 1) {
+    let nr = current.r + d.r;
+    let nc = current.c + d.c;
+    // Wrap tunnel on row 7
+    if (current.r === 7 && nr === 7) {
+      if (nc < 0) nc = GRID_SIZE - 1;
+      else if (nc >= GRID_SIZE) nc = 0;
+    }
+    if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && maze[nr][nc] !== 1) {
       validMoves.push({ r: nr, c: nc });
     }
   }
@@ -224,17 +190,16 @@ function findBfsStep(
     }
   }
 
-  // Avoid clumping on other ghosts if alternative path exists
-  if (avoidPos && candidates.length > 1) {
-    const avoids = Array.isArray(avoidPos) ? avoidPos : [avoidPos];
-    const nonAvoid = candidates.filter((m) => !avoids.some((a) => a.r === m.r && a.c === m.c));
+  // Avoid other ghosts if alternative exists
+  if (avoidPos && avoidPos.length > 0 && candidates.length > 1) {
+    const nonAvoid = candidates.filter((m) => !avoidPos.some((a) => a.r === m.r && a.c === m.c));
     if (nonAvoid.length > 0) {
       candidates = nonAvoid;
     }
   }
 
   const queue: { pos: Point; firstMove: Point }[] = [];
-  const visited = Array.from({ length: 9 }, () => Array(9).fill(false));
+  const visited = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(false));
   visited[current.r][current.c] = true;
 
   for (const move of candidates) {
@@ -249,9 +214,13 @@ function findBfsStep(
     }
 
     for (const d of directions) {
-      const nr = item.pos.r + d.r;
-      const nc = item.pos.c + d.c;
-      if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9 && maze[nr][nc] !== 1 && !visited[nr][nc]) {
+      let nr = item.pos.r + d.r;
+      let nc = item.pos.c + d.c;
+      if (item.pos.r === 7 && nr === 7) {
+        if (nc < 0) nc = GRID_SIZE - 1;
+        else if (nc >= GRID_SIZE) nc = 0;
+      }
+      if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && maze[nr][nc] !== 1 && !visited[nr][nc]) {
         visited[nr][nc] = true;
         queue.push({ pos: { r: nr, c: nc }, firstMove: item.firstMove });
       }
@@ -274,57 +243,54 @@ function findBfsStep(
 // AUTHENTIC PAC-MAN GHOST AI TARGETING
 // ==========================================
 
-// 1. Blinky (Red) – Direct Chase: Always targets Pac-Man's current position
+// 1. Blinky (Red) – Direct Chase
 function getBlinkyTarget(player: Point): Point {
   return player;
 }
 
-// 2. Pinky (Pink) – Ambush: Targets a position 3 tiles ahead of Pac-Man in movement direction
+// 2. Pinky (Pink) – Ambush: 3 tiles ahead in movement direction
 function getPinkyTarget(player: Point, direction: Direction): Point {
   if (!direction) return player;
-  let dr = direction === "UP" ? -1 : direction === "DOWN" ? 1 : 0;
-  let dc = direction === "LEFT" ? -1 : direction === "RIGHT" ? 1 : 0;
+  const dr = direction === "UP" ? -1 : direction === "DOWN" ? 1 : 0;
+  const dc = direction === "LEFT" ? -1 : direction === "RIGHT" ? 1 : 0;
   return {
-    r: Math.max(0, Math.min(8, player.r + dr * 3)),
-    c: Math.max(0, Math.min(8, player.c + dc * 3)),
+    r: Math.max(0, Math.min(GRID_SIZE - 1, player.r + dr * 3)),
+    c: Math.max(0, Math.min(GRID_SIZE - 1, player.c + dc * 3)),
   };
 }
 
-// 3. Inky (Cyan) – Intercept: Uses Pac-Man's position and Blinky's position to calculate target.
-// Selects the tile 2 spaces ahead of Pac-Man, and doubles the vector from Blinky!
+// 3. Inky (Cyan) – Intercept: 2 spaces ahead doubled from Blinky
 function getInkyTarget(player: Point, direction: Direction, blinky: Point): Point {
-  let dr = direction === "UP" ? -1 : direction === "DOWN" ? 1 : 0;
-  let dc = direction === "LEFT" ? -1 : direction === "RIGHT" ? 1 : 0;
+  const dr = direction === "UP" ? -1 : direction === "DOWN" ? 1 : 0;
+  const dc = direction === "LEFT" ? -1 : direction === "RIGHT" ? 1 : 0;
   const pivotR = player.r + dr * 2;
   const pivotC = player.c + dc * 2;
   return {
-    r: Math.max(0, Math.min(8, pivotR + (pivotR - blinky.r))),
-    c: Math.max(0, Math.min(8, pivotC + (pivotC - blinky.c))),
+    r: Math.max(0, Math.min(GRID_SIZE - 1, pivotR + (pivotR - blinky.r))),
+    c: Math.max(0, Math.min(GRID_SIZE - 1, pivotC + (pivotC - blinky.c))),
   };
 }
 
-// 4. Clyde (Orange) – Chase and Retreat: Chases Pac-Man when far away (>3 tiles),
-// retreats toward its home corner (7, 1) when close (<=3 tiles).
+// 4. Clyde (Orange) – Chase and Retreat: Chases when far (>4 tiles), retreats to corner when close
 function getClydeTarget(player: Point, clyde: Point, maze: number[][]): Point {
   const dist = getBfsDistance(clyde, player, maze);
-  if (dist > 3) {
-    return player; // Chases when far
+  if (dist > 4) {
+    return player;
   }
-  return { r: 7, c: 1 }; // Retreats to bottom-left corner
+  return SCATTER_CORNERS.clyde;
 }
 
-// Pupil offsets for smooth eye tracking
 function getPupilOffset(dir: Direction): { dx: number; dy: number } {
   switch (dir) {
-    case "UP": return { dx: 0, dy: -0.9 };
-    case "DOWN": return { dx: 0, dy: 0.9 };
-    case "LEFT": return { dx: -0.9, dy: 0 };
-    case "RIGHT": return { dx: 0.9, dy: 0 };
+    case "UP": return { dx: 0, dy: -0.8 };
+    case "DOWN": return { dx: 0, dy: 0.8 };
+    case "LEFT": return { dx: -0.8, dy: 0 };
+    case "RIGHT": return { dx: 0.8, dy: 0 };
     default: return { dx: 0, dy: 0 };
   }
 }
 
-// Reusable Ghost SVG Renderer
+// Scaled Ghost SVG Renderer for 16x16 grid cell
 const GhostSvg: React.FC<{
   pos: Point;
   dir: Direction;
@@ -336,67 +302,66 @@ const GhostSvg: React.FC<{
   return (
     <g
       style={{
-        transform: `translate(${pos.c * CELL_SIZE + 10}px, ${pos.r * CELL_SIZE + 10}px)`,
+        transform: `translate(${pos.c * CELL_SIZE + 8}px, ${pos.r * CELL_SIZE + 8}px)`,
         transition: isPlaying
           ? isOverclocked
-            ? "transform 0.46s ease-out"
-            : "transform 0.28s cubic-bezier(0.25, 0.1, 0.25, 1)"
+            ? "transform 0.44s ease-out"
+            : "transform 0.26s cubic-bezier(0.25, 0.1, 0.25, 1)"
           : "none",
       }}
     >
       {/* Antennae */}
       <line
-        x1="-3"
-        y1="-7"
-        x2="-5"
-        y2="-9"
+        x1="-2.5"
+        y1="-5.5"
+        x2="-4"
+        y2="-7.5"
         stroke={isOverclocked ? "#818cf8" : color}
-        strokeWidth="1.2"
+        strokeWidth="1"
         strokeLinecap="round"
       />
       <line
-        x1="3"
-        y1="-7"
-        x2="5"
-        y2="-9"
+        x1="2.5"
+        y1="-5.5"
+        x2="4"
+        y2="-7.5"
         stroke={isOverclocked ? "#818cf8" : color}
-        strokeWidth="1.2"
+        strokeWidth="1"
         strokeLinecap="round"
       />
-      <circle cx="-5" cy="-9" r="0.8" fill={isOverclocked ? "#818cf8" : color} />
-      <circle cx="5" cy="-9" r="0.8" fill={isOverclocked ? "#818cf8" : color} />
-      {/* Body & Wavy Skirt */}
+      <circle cx="-4" cy="-7.5" r="0.7" fill={isOverclocked ? "#818cf8" : color} />
+      <circle cx="4" cy="-7.5" r="0.7" fill={isOverclocked ? "#818cf8" : color} />
+      {/* Ghost Body */}
       <path
-        d="M -7 7 L -7 0 A 7 7 0 0 1 7 0 L 7 7 L 4 5.2 L 1 7 L -2 5.2 L -4 7 Z"
-        fill={isOverclocked ? "#6366f1" : color}
+        d="M -5.5 5.5 L -5.5 0 A 5.5 5.5 0 0 1 5.5 0 L 5.5 5.5 L 3.2 4.2 L 1 5.5 L -1.2 4.2 L -3.4 5.5 Z"
+        fill={isOverclocked ? "#4f46e5" : color}
         className={`${isOverclocked ? "animate-pulse" : ""} stroke-slate-900 dark:stroke-slate-950`}
-        strokeWidth="1"
+        strokeWidth="0.9"
       />
-      {/* Eyes with smooth directional tracking */}
-      <circle cx="-3" cy="-1" r="2.1" fill="#ffffff" />
-      <circle cx="3" cy="-1" r="2.1" fill="#ffffff" />
+      {/* Ghost Eyes */}
+      <circle cx="-2.3" cy="-0.8" r="1.7" fill="#ffffff" />
+      <circle cx="2.3" cy="-0.8" r="1.7" fill="#ffffff" />
       <circle
-        cx={-3 + pupil.dx}
-        cy={-1 + pupil.dy}
-        r="1.05"
+        cx={-2.3 + pupil.dx}
+        cy={-0.8 + pupil.dy}
+        r="0.85"
         fill="#0f172a"
-        style={{ transition: "cx 0.15s ease, cy 0.15s ease" }}
+        style={{ transition: "cx 0.12s ease, cy 0.12s ease" }}
       />
       <circle
-        cx={3 + pupil.dx}
-        cy={-1 + pupil.dy}
-        r="1.05"
+        cx={2.3 + pupil.dx}
+        cy={-0.8 + pupil.dy}
+        r="0.85"
         fill="#0f172a"
-        style={{ transition: "cx 0.15s ease, cy 0.15s ease" }}
+        style={{ transition: "cx 0.12s ease, cy 0.12s ease" }}
       />
     </g>
   );
 };
 
 export const ByteRun: React.FC = () => {
-  // Start with a random maze preset
   const initialMazeIdx = useRef(Math.floor(Math.random() * MAZE_PRESETS.length)).current;
-  const initialSpawns = useRef(generateSpawns(MAZE_PRESETS[initialMazeIdx])).current;
+  const initialSpawns = useRef(getFixedSpawns()).current;
 
   // Render states
   const [mazeIdx, setMazeIdx] = useState(initialMazeIdx);
@@ -409,22 +374,16 @@ export const ByteRun: React.FC = () => {
   const [player, setPlayer] = useState<Point>(initialSpawns.player);
   const [direction, setDirection] = useState<Direction>(null);
 
-  // Active Ghost Count (1 to 4 ghosts, defaults to 2: Blinky & Inky)
-  const [ghostCount, setGhostCount] = useState<number>(2);
-
-  // 1. Blinky (Red - Direct Chase)
+  // All 4 Classic Ghosts
   const [blinky, setBlinky] = useState<Point>(initialSpawns.blinky);
   const [blinkyDir, setBlinkyDir] = useState<Direction>("UP");
 
-  // 2. Pinky (Pink - 4-Tile Ambush)
   const [pinky, setPinky] = useState<Point>(initialSpawns.pinky);
   const [pinkyDir, setPinkyDir] = useState<Direction>("DOWN");
 
-  // 3. Inky (Cyan - Vector Intercept)
   const [inky, setInky] = useState<Point>(initialSpawns.inky);
   const [inkyDir, setInkyDir] = useState<Direction>("UP");
 
-  // 4. Clyde (Orange - Chase & Retreat)
   const [clyde, setClyde] = useState<Point>(initialSpawns.clyde);
   const [clydeDir, setClydeDir] = useState<Direction>("LEFT");
 
@@ -436,15 +395,13 @@ export const ByteRun: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isRubberAnimating, setIsRubberAnimating] = useState(false);
-  const [autoResize, setAutoResize] = useState(true);
   const [autoMinimizeCountdown, setAutoMinimizeCountdown] = useState<number | null>(null);
-  const [aiMode, setAiMode] = useState<AiMode>("NEURAL");
   const [mouthOpen, setMouthOpen] = useState(true);
   const [isProtected, setIsProtected] = useState(true);
   const [isOverclocked, setIsOverclocked] = useState(false);
   const [scoreChip, setScoreChip] = useState<string | null>(null);
 
-  // Master game loop reference decoupled from React render churn
+  // Decoupled master game loop reference
   const loopRef = useRef({
     gameState: "IDLE" as "IDLE" | "PLAYING" | "WON" | "LOST",
     mazeIdx: initialMazeIdx,
@@ -453,7 +410,6 @@ export const ByteRun: React.FC = () => {
     playerPrev: null as Point | null,
     direction: null as Direction,
     nextDirection: null as Direction,
-    ghostCount: 2,
     blinky: initialSpawns.blinky,
     blinkyPrev: null as Point | null,
     blinkySpawn: initialSpawns.blinky,
@@ -470,7 +426,6 @@ export const ByteRun: React.FC = () => {
     isProtected: true,
     overclockUntil: 0,
     gameStartTime: 0,
-    aiMode: "NEURAL" as AiMode,
     lastPlayerTime: 0,
     lastBlinkyTime: 0,
     lastPinkyTime: 0,
@@ -480,40 +435,11 @@ export const ByteRun: React.FC = () => {
     evasionCooldown: 0,
   });
 
-  useEffect(() => {
-    loopRef.current.ghostCount = ghostCount;
-  }, [ghostCount]);
-
-  useEffect(() => {
-    loopRef.current.aiMode = aiMode;
-  }, [aiMode]);
-
-  // Dynamic Telemetry Metrics
-  const dotsRemaining = maze.flat().filter((c) => c === 0 || c === 3).length;
-  const initialDots = useMemo(() => MAZE_PRESETS[mazeIdx].flat().filter((c) => c === 0 || c === 3).length, [mazeIdx]);
-  const lossValue = Math.max(0, dotsRemaining / (initialDots || 35));
-  const lossDisplay = lossValue.toFixed(2);
-  const speedBoost = Math.round((1 - lossValue) * 45);
-
-  const currentGhostSpeed = useMemo(() => {
-    let base = aiMode === "OVERFIT" ? 270 : aiMode === "HEURISTIC" ? 340 : 300;
-    if (isOverclocked) return base + 160;
-    return Math.max(200, base - speedBoost);
-  }, [aiMode, isOverclocked, speedBoost]);
-
-  const cycleAiMode = useCallback(() => {
-    setAiMode((prev) => {
-      const next: AiMode = prev === "NEURAL" ? "OVERFIT" : prev === "OVERFIT" ? "HEURISTIC" : "NEURAL";
-      loopRef.current.aiMode = next;
-      return next;
-    });
-  }, []);
-
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const chipTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Subtle mobile haptic feedback
+  // Haptic Feedback
   const triggerHaptic = useCallback((pattern: number | number[] = 12) => {
     try {
       if (typeof navigator !== "undefined" && "vibrate" in navigator) {
@@ -527,7 +453,7 @@ export const ByteRun: React.FC = () => {
   // High score persistence
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("byte_run_high_score");
+      const saved = localStorage.getItem("pacman_arcade_high_score");
       if (saved) {
         setHighScore(parseInt(saved, 10) || 0);
       }
@@ -540,7 +466,7 @@ export const ByteRun: React.FC = () => {
     setHighScore((prev) => {
       const best = Math.max(prev, newScore);
       try {
-        localStorage.setItem("byte_run_high_score", best.toString());
+        localStorage.setItem("pacman_arcade_high_score", best.toString());
       } catch {
         // Storage unavailable
       }
@@ -548,7 +474,7 @@ export const ByteRun: React.FC = () => {
     });
   }, []);
 
-  // Floating score chip
+  // Floating score feedback
   const triggerScoreChip = useCallback((text: string) => {
     setScoreChip(text);
     if (chipTimeoutRef.current) clearTimeout(chipTimeoutRef.current);
@@ -557,11 +483,11 @@ export const ByteRun: React.FC = () => {
     }, 1200);
   }, []);
 
-  // Reset Game: always picks a DIFFERENT maze layout!
+  // Reset Game: Pick a DIFFERENT 15x15 maze preset
   const resetGame = useCallback(() => {
     const nextIdx = (loopRef.current.mazeIdx + 1 + Math.floor(Math.random() * (MAZE_PRESETS.length - 1))) % MAZE_PRESETS.length;
     const nextBase = MAZE_PRESETS[nextIdx];
-    const spawns = generateSpawns(nextBase);
+    const spawns = getFixedSpawns();
     const newMaze = nextBase.map((row) => [...row]);
     newMaze[spawns.player.r][spawns.player.c] = 2;
 
@@ -601,7 +527,6 @@ export const ByteRun: React.FC = () => {
     ref.lastPinkyTime = 0;
     ref.lastInkyTime = 0;
     ref.lastClydeTime = 0;
-    ref.aiMode = aiMode;
 
     setMazeIdx(nextIdx);
     setMaze(newMaze);
@@ -628,13 +553,12 @@ export const ByteRun: React.FC = () => {
     setIsRubberAnimating(false);
     triggerHaptic(10);
     containerRef.current?.focus();
-  }, [aiMode, triggerHaptic]);
+  }, [triggerHaptic]);
 
-  // Game Launch: starts immediately, only rubber-springs if expanding from compact mode
+  // Game Start Trigger
   const triggerGameStart = useCallback(
     (initialDir: Direction = "RIGHT") => {
-      // Only spring-stretch when expanding from compact mode
-      if (autoResize && !isExpanded) {
+      if (!isExpanded) {
         setIsExpanded(true);
         setIsRubberAnimating(true);
         setTimeout(() => setIsRubberAnimating(false), 750);
@@ -648,12 +572,12 @@ export const ByteRun: React.FC = () => {
       setGameState("PLAYING");
       triggerHaptic(12);
     },
-    [autoResize, isExpanded, triggerHaptic]
+    [isExpanded, triggerHaptic]
   );
 
-  // Auto-minimize after 5 seconds on game end (WON or LOST)
+  // Auto-minimize after 5 seconds upon game finish
   useEffect(() => {
-    if ((gameState === "WON" || gameState === "LOST") && isExpanded && autoResize) {
+    if ((gameState === "WON" || gameState === "LOST") && isExpanded) {
       setAutoMinimizeCountdown(5);
       const interval = setInterval(() => {
         setAutoMinimizeCountdown((prev) => {
@@ -670,7 +594,7 @@ export const ByteRun: React.FC = () => {
     } else {
       setAutoMinimizeCountdown(null);
     }
-  }, [gameState, isExpanded, autoResize]);
+  }, [gameState, isExpanded]);
 
   // Spawn protection timer (3s)
   useEffect(() => {
@@ -691,17 +615,15 @@ export const ByteRun: React.FC = () => {
 
     const gameLoop = (time: number) => {
       const ref = loopRef.current;
-
       if (ref.gameState !== "PLAYING") return;
 
-      // Initialize frame timers on first frame
       if (ref.lastPlayerTime === 0) ref.lastPlayerTime = time;
       if (ref.lastBlinkyTime === 0) ref.lastBlinkyTime = time;
       if (ref.lastPinkyTime === 0) ref.lastPinkyTime = time;
       if (ref.lastInkyTime === 0) ref.lastInkyTime = time;
       if (ref.lastClydeTime === 0) ref.lastClydeTime = time;
 
-      // Handle Overclock expiration
+      // Check Power Pellet expiration
       if (ref.overclockUntil > 0 && time >= ref.overclockUntil) {
         ref.overclockUntil = 0;
         setIsOverclocked(false);
@@ -709,38 +631,16 @@ export const ByteRun: React.FC = () => {
 
       const isFleeing = time < ref.overclockUntil;
       const elapsed = ref.gameStartTime > 0 ? time - ref.gameStartTime : 0;
-      // First 5 seconds: Ghosts in SCATTER mode (patrol corners) to give player comfortable setup
-      const isScatter = elapsed < 5000;
+      // First 4.5 seconds: Ghosts in SCATTER mode
+      const isScatter = elapsed < 4500;
 
-      // Dynamic Speed & Progressive Training Convergence Calculation
-      const curDotsRemaining = ref.maze.flat().filter((c) => c === 0 || c === 3).length;
-      const curLoss = Math.max(0, curDotsRemaining / 35);
-      const curSpeedBoost = Math.round((1 - curLoss) * 40);
+      // Speed configuration: balanced for 15x15 maze
+      const blinkyInterval = isFleeing ? 460 : isScatter ? 350 : 280;
+      const pinkyInterval = isFleeing ? 470 : isScatter ? 360 : 295;
+      const inkyInterval = isFleeing ? 480 : isScatter ? 370 : 310;
+      const clydeInterval = isFleeing ? 500 : isScatter ? 390 : 325;
 
-      // In scatter mode (first 5s), ghosts are relaxed (360ms/380ms) to give player comfortable setup
-      let baseBlinky = isScatter ? 360 : 300;
-      let basePinky = isScatter ? 370 : 315;
-      let baseInky = isScatter ? 380 : 330;
-      let baseClyde = isScatter ? 400 : 345;
-
-      if (ref.aiMode === "OVERFIT") {
-        baseBlinky = isScatter ? 330 : 270;
-        basePinky = isScatter ? 340 : 285;
-        baseInky = isScatter ? 350 : 300;
-        baseClyde = isScatter ? 370 : 315;
-      } else if (ref.aiMode === "HEURISTIC") {
-        baseBlinky = isScatter ? 390 : 340;
-        basePinky = isScatter ? 400 : 355;
-        baseInky = isScatter ? 410 : 370;
-        baseClyde = isScatter ? 430 : 385;
-      }
-
-      const blinkyInterval = isFleeing ? 450 : Math.max(200, baseBlinky - curSpeedBoost);
-      const inkyInterval = isFleeing ? 470 : Math.max(220, baseInky - curSpeedBoost);
-      const pinkyInterval = isFleeing ? 460 : Math.max(215, basePinky - curSpeedBoost);
-      const clydeInterval = isFleeing ? 490 : Math.max(235, baseClyde - curSpeedBoost);
-
-      // Helper for collision checking
+      // Collision helper
       const handleCollision = (
         nextPos: Point,
         ghostPrev: Point | null,
@@ -764,10 +664,10 @@ export const ByteRun: React.FC = () => {
             else if (key === "inky") { ref.inky = ghostSpawn; ref.inkyPrev = null; }
             else if (key === "clyde") { ref.clyde = ghostSpawn; ref.clydePrev = null; }
             setGhostPos(ghostSpawn);
-            ref.score += 100;
+            ref.score += 200;
             setScore(ref.score);
             updateHighScore(ref.score);
-            triggerScoreChip("+100 REBOOT!");
+            triggerScoreChip("+200 GHOST!");
             triggerHaptic([30, 80]);
             return false;
           } else if (!ref.isProtected) {
@@ -781,8 +681,8 @@ export const ByteRun: React.FC = () => {
         return false;
       };
 
-      // 1. PLAYER TICK (Every 175ms - Snappy & Responsive)
-      if (time - ref.lastPlayerTime >= 175) {
+      // 1. PLAYER TICK (Every 165ms)
+      if (time - ref.lastPlayerTime >= 165) {
         ref.lastPlayerTime = time;
 
         let dirToUse = ref.direction;
@@ -796,11 +696,17 @@ export const ByteRun: React.FC = () => {
           if (ref.nextDirection === "LEFT") testC--;
           if (ref.nextDirection === "RIGHT") testC++;
 
+          // Handle wrap tunnel row 7 for player test
+          if (ref.player.r === 7 && testR === 7) {
+            if (testC < 0) testC = GRID_SIZE - 1;
+            else if (testC >= GRID_SIZE) testC = 0;
+          }
+
           if (
             testR >= 0 &&
-            testR < 9 &&
+            testR < GRID_SIZE &&
             testC >= 0 &&
-            testC < 9 &&
+            testC < GRID_SIZE &&
             ref.maze[testR][testC] !== 1
           ) {
             dirToUse = ref.nextDirection;
@@ -817,20 +723,26 @@ export const ByteRun: React.FC = () => {
           if (dirToUse === "LEFT") nc--;
           if (dirToUse === "RIGHT") nc++;
 
-          if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9 && ref.maze[nr][nc] !== 1) {
+          // Handle wrap tunnel on row 7
+          if (ref.player.r === 7 && nr === 7) {
+            if (nc < 0) nc = GRID_SIZE - 1;
+            else if (nc >= GRID_SIZE) nc = 0;
+          }
+
+          if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && ref.maze[nr][nc] !== 1) {
             ref.playerPrev = ref.player;
             ref.player = { r: nr, c: nc };
             setPlayer({ r: nr, c: nc });
 
-            // Immediate collision check on player step against all active ghosts
-            const currentActiveGhosts = [
+            // Immediate player collision check with all 4 ghosts
+            const currentGhosts = [
               { key: "blinky" as const, pos: ref.blinky, prev: ref.blinkyPrev, spawn: ref.blinkySpawn, set: setBlinky },
-              ...(ref.ghostCount >= 2 ? [{ key: "inky" as const, pos: ref.inky, prev: ref.inkyPrev, spawn: ref.inkySpawn, set: setInky }] : []),
-              ...(ref.ghostCount >= 3 ? [{ key: "pinky" as const, pos: ref.pinky, prev: ref.pinkyPrev, spawn: ref.pinkySpawn, set: setPinky }] : []),
-              ...(ref.ghostCount >= 4 ? [{ key: "clyde" as const, pos: ref.clyde, prev: ref.clydePrev, spawn: ref.clydeSpawn, set: setClyde }] : []),
+              { key: "pinky" as const, pos: ref.pinky, prev: ref.pinkyPrev, spawn: ref.pinkySpawn, set: setPinky },
+              { key: "inky" as const, pos: ref.inky, prev: ref.inkyPrev, spawn: ref.inkySpawn, set: setInky },
+              { key: "clyde" as const, pos: ref.clyde, prev: ref.clydePrev, spawn: ref.clydeSpawn, set: setClyde },
             ];
 
-            for (const g of currentActiveGhosts) {
+            for (const g of currentGhosts) {
               const hitDirect = ref.player.r === g.pos.r && ref.player.c === g.pos.c;
               const hitCrossover =
                 g.prev &&
@@ -847,10 +759,10 @@ export const ByteRun: React.FC = () => {
                   else if (g.key === "inky") { ref.inky = g.spawn; ref.inkyPrev = null; }
                   else if (g.key === "clyde") { ref.clyde = g.spawn; ref.clydePrev = null; }
                   g.set(g.spawn);
-                  ref.score += 100;
+                  ref.score += 200;
                   setScore(ref.score);
                   updateHighScore(ref.score);
-                  triggerScoreChip("+100 REBOOT!");
+                  triggerScoreChip("+200 GHOST!");
                   triggerHaptic([30, 80]);
                 } else if (!ref.isProtected) {
                   ref.gameState = "LOST";
@@ -877,22 +789,22 @@ export const ByteRun: React.FC = () => {
               updateHighScore(newScore);
 
               if (cellValue === 3) {
-                ref.overclockUntil = time + 5500;
+                ref.overclockUntil = time + 6500;
                 setIsOverclocked(true);
-                triggerScoreChip("+50 LR BOOST!");
+                triggerScoreChip("+50 POWER!");
                 triggerHaptic([25, 60, 25]);
               }
 
-              // Win condition check
+              // Win condition check: all dots eaten
               const remaining = updatedMaze.flat().filter((c) => c === 0 || c === 3).length;
               if (remaining === 0) {
                 ref.gameState = "WON";
-                const winScore = ref.score + 100;
+                const winScore = ref.score + 500;
                 ref.score = winScore;
                 setScore(winScore);
                 updateHighScore(winScore);
                 setGameState("WON");
-                triggerScoreChip("+100 WIN!");
+                triggerScoreChip("+500 CLEAR!");
                 triggerHaptic([30, 60, 30, 60, 60]);
                 return;
               }
@@ -903,7 +815,7 @@ export const ByteRun: React.FC = () => {
         }
       }
 
-      // 2. GHOST 1: BLINKY (Red) – Direct Chase Policy TICK
+      // 2. GHOST 1: BLINKY (Red) – Direct Chase Policy
       if (time - ref.lastBlinkyTime >= blinkyInterval) {
         ref.lastBlinkyTime = time;
 
@@ -911,16 +823,12 @@ export const ByteRun: React.FC = () => {
         if (isFleeing) {
           target = getFarthestCorner(ref.player);
         } else if (isScatter) {
-          target = { r: 1, c: 7 }; // Blinky scatter corner: top-right
+          target = SCATTER_CORNERS.blinky;
         } else {
-          target = getBlinkyTarget(ref.player); // Direct Chase
+          target = getBlinkyTarget(ref.player);
         }
 
-        const avoid: Point[] = [];
-        if (ref.ghostCount >= 2) avoid.push(ref.inky);
-        if (ref.ghostCount >= 3) avoid.push(ref.pinky);
-        if (ref.ghostCount >= 4) avoid.push(ref.clyde);
-
+        const avoid: Point[] = [ref.pinky, ref.inky, ref.clyde];
         const next = findBfsStep(ref.maze, ref.blinky, target, ref.blinkyPrev, avoid);
 
         if (next.r < ref.blinky.r) setBlinkyDir("UP");
@@ -935,53 +843,20 @@ export const ByteRun: React.FC = () => {
         if (handleCollision(next, ref.blinkyPrev, ref.blinkySpawn, setBlinky, "blinky")) return;
       }
 
-      // 3. GHOST 2: INKY (Cyan) – Vector Interception Policy TICK
-      if (ref.ghostCount >= 2 && time - ref.lastInkyTime >= inkyInterval) {
-        ref.lastInkyTime = time;
-
-        let target: Point;
-        if (isFleeing) {
-          target = getFarthestCorner(ref.player, getFarthestCorner(ref.player));
-        } else if (isScatter) {
-          target = { r: 7, c: 7 }; // Inky scatter corner: bottom-right
-        } else {
-          target = getInkyTarget(ref.player, ref.direction, ref.blinky); // Vector Intercept
-        }
-
-        const avoid: Point[] = [ref.blinky];
-        if (ref.ghostCount >= 3) avoid.push(ref.pinky);
-        if (ref.ghostCount >= 4) avoid.push(ref.clyde);
-
-        const next = findBfsStep(ref.maze, ref.inky, target, ref.inkyPrev, avoid);
-
-        if (next.r < ref.inky.r) setInkyDir("UP");
-        else if (next.r > ref.inky.r) setInkyDir("DOWN");
-        else if (next.c < ref.inky.c) setInkyDir("LEFT");
-        else if (next.c > ref.inky.c) setInkyDir("RIGHT");
-
-        ref.inkyPrev = ref.inky;
-        ref.inky = next;
-        setInky(next);
-
-        if (handleCollision(next, ref.inkyPrev, ref.inkySpawn, setInky, "inky")) return;
-      }
-
-      // 4. GHOST 3: PINKY (Pink) – 4-Tile Ambush Policy TICK
-      if (ref.ghostCount >= 3 && time - ref.lastPinkyTime >= pinkyInterval) {
+      // 3. GHOST 2: PINKY (Pink) – Ambush Policy (Ahead 3 tiles)
+      if (time - ref.lastPinkyTime >= pinkyInterval) {
         ref.lastPinkyTime = time;
 
         let target: Point;
         if (isFleeing) {
           target = getFarthestCorner(ref.player);
         } else if (isScatter) {
-          target = { r: 1, c: 1 }; // Pinky scatter corner: top-left
+          target = SCATTER_CORNERS.pinky;
         } else {
-          target = getPinkyTarget(ref.player, ref.direction); // Ambush ahead
+          target = getPinkyTarget(ref.player, ref.direction);
         }
 
-        const avoid: Point[] = [ref.blinky, ref.inky];
-        if (ref.ghostCount >= 4) avoid.push(ref.clyde);
-
+        const avoid: Point[] = [ref.blinky, ref.inky, ref.clyde];
         const next = findBfsStep(ref.maze, ref.pinky, target, ref.pinkyPrev, avoid);
 
         if (next.r < ref.pinky.r) setPinkyDir("UP");
@@ -996,21 +871,48 @@ export const ByteRun: React.FC = () => {
         if (handleCollision(next, ref.pinkyPrev, ref.pinkySpawn, setPinky, "pinky")) return;
       }
 
-      // 5. GHOST 4: CLYDE (Orange) – Chase and Retreat Policy TICK
-      if (ref.ghostCount >= 4 && time - ref.lastClydeTime >= clydeInterval) {
+      // 4. GHOST 3: INKY (Cyan) – Vector Intercept Policy
+      if (time - ref.lastInkyTime >= inkyInterval) {
+        ref.lastInkyTime = time;
+
+        let target: Point;
+        if (isFleeing) {
+          target = getFarthestCorner(ref.player, getFarthestCorner(ref.player));
+        } else if (isScatter) {
+          target = SCATTER_CORNERS.inky;
+        } else {
+          target = getInkyTarget(ref.player, ref.direction, ref.blinky);
+        }
+
+        const avoid: Point[] = [ref.blinky, ref.pinky, ref.clyde];
+        const next = findBfsStep(ref.maze, ref.inky, target, ref.inkyPrev, avoid);
+
+        if (next.r < ref.inky.r) setInkyDir("UP");
+        else if (next.r > ref.inky.r) setInkyDir("DOWN");
+        else if (next.c < ref.inky.c) setInkyDir("LEFT");
+        else if (next.c > ref.inky.c) setInkyDir("RIGHT");
+
+        ref.inkyPrev = ref.inky;
+        ref.inky = next;
+        setInky(next);
+
+        if (handleCollision(next, ref.inkyPrev, ref.inkySpawn, setInky, "inky")) return;
+      }
+
+      // 5. GHOST 4: CLYDE (Orange) – Chase & Retreat Policy
+      if (time - ref.lastClydeTime >= clydeInterval) {
         ref.lastClydeTime = time;
 
         let target: Point;
         if (isFleeing) {
           target = getFarthestCorner(ref.player);
         } else if (isScatter) {
-          target = { r: 7, c: 1 }; // Clyde scatter corner: bottom-left
+          target = SCATTER_CORNERS.clyde;
         } else {
-          target = getClydeTarget(ref.player, ref.clyde, ref.maze); // Chase if far, retreat if close
+          target = getClydeTarget(ref.player, ref.clyde, ref.maze);
         }
 
-        const avoid: Point[] = [ref.blinky, ref.inky, ref.pinky];
-
+        const avoid: Point[] = [ref.blinky, ref.pinky, ref.inky];
         const next = findBfsStep(ref.maze, ref.clyde, target, ref.clydePrev, avoid);
 
         if (next.r < ref.clyde.r) setClydeDir("UP");
@@ -1025,23 +927,23 @@ export const ByteRun: React.FC = () => {
         if (handleCollision(next, ref.clydePrev, ref.clydeSpawn, setClyde, "clyde")) return;
       }
 
-      // Evasion bonus check across all active ghosts
-      const allActiveGhosts = [
+      // Evasion bonus check
+      const allGhosts = [
         { key: "blinky" as const, pos: ref.blinky },
-        ...(ref.ghostCount >= 2 ? [{ key: "inky" as const, pos: ref.inky }] : []),
-        ...(ref.ghostCount >= 3 ? [{ key: "pinky" as const, pos: ref.pinky }] : []),
-        ...(ref.ghostCount >= 4 ? [{ key: "clyde" as const, pos: ref.clyde }] : []),
+        { key: "pinky" as const, pos: ref.pinky },
+        { key: "inky" as const, pos: ref.inky },
+        { key: "clyde" as const, pos: ref.clyde },
       ];
 
-      for (const g of allActiveGhosts) {
+      for (const g of allGhosts) {
         const d = getBfsDistance(ref.player, g.pos, ref.maze);
         if (d === 1 && ref.closeGhost === null) {
           ref.closeGhost = g.key;
         } else if (ref.closeGhost === g.key && d >= 3 && ref.evasionCooldown <= 0) {
-          ref.score += 20;
+          ref.score += 25;
           setScore(ref.score);
           updateHighScore(ref.score);
-          triggerScoreChip("+20 EVADE");
+          triggerScoreChip("+25 EVADE!");
           triggerHaptic(15);
           ref.closeGhost = null;
           ref.evasionCooldown = 8;
@@ -1059,7 +961,6 @@ export const ByteRun: React.FC = () => {
     return () => cancelAnimationFrame(animId);
   }, [gameState, triggerHaptic, triggerScoreChip, updateHighScore]);
 
-  // Player Mouth Angle & Direction Rotation
   const getPlayerRotation = () => {
     switch (direction) {
       case "UP": return -90;
@@ -1069,7 +970,6 @@ export const ByteRun: React.FC = () => {
     }
   };
 
-  // Direction handler (starts immediately with 2s launch & elastic stretch from IDLE)
   const handleDirButton = (dir: Direction) => {
     setIsFocused(true);
     containerRef.current?.focus();
@@ -1080,7 +980,7 @@ export const ByteRun: React.FC = () => {
     }
   };
 
-  // Keyboard navigation & Enter/Space to restart
+  // Keyboard navigation & restart
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isExpanded) {
@@ -1088,7 +988,6 @@ export const ByteRun: React.FC = () => {
         return;
       }
 
-      // Enter, Space, or R restarts game immediately on loss or win
       if (e.key === "Enter" || e.key === " " || e.key.toLowerCase() === "r") {
         if (loopRef.current.gameState === "LOST" || loopRef.current.gameState === "WON") {
           e.preventDefault();
@@ -1121,7 +1020,7 @@ export const ByteRun: React.FC = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isFocused, isExpanded, gameState, resetGame, triggerGameStart]);
 
-  // Touch handlers with real-time drag gestures
+  // Touch handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
     touchStartRef.current = { x: touch.clientX, y: touch.clientY };
@@ -1165,16 +1064,13 @@ export const ByteRun: React.FC = () => {
           setIsMinimized(false);
           setIsFocused(true);
         }}
-        aria-label="Open Byte Run mini game"
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center gap-2 px-3.5 py-2 bg-yellow-400 dark:bg-yellow-400 text-slate-900 border-2 border-slate-900 dark:border-white rounded-xl font-mono-code text-[11px] sm:text-xs font-black uppercase shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#ffffff] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_#0f172a] transition-all cursor-pointer active:scale-95"
+        aria-label="Open Pac-Man mini arcade"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center gap-2 px-3.5 py-2 bg-yellow-400 dark:bg-yellow-400 text-slate-900 border-2 border-slate-900 dark:border-white rounded-xl font-mono-code text-[11px] sm:text-xs font-black uppercase shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#ffffff] hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer active:scale-95"
       >
-        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse border border-slate-900 shrink-0" />
-        <span className="flex items-center gap-1.5">
-          <Brain className="w-3.5 h-3.5" />
-          <span>BYTE RUN</span>
-        </span>
+        <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse border border-slate-900 shrink-0" />
+        <span className="font-extrabold tracking-wide">PAC-MAN</span>
         <span className="text-[9px] bg-slate-900 text-yellow-300 px-1.5 py-0.5 rounded font-mono-code font-bold">
-          {aiMode}
+          {score > 0 ? score : "PLAY"}
         </span>
       </button>
     );
@@ -1204,11 +1100,11 @@ export const ByteRun: React.FC = () => {
         onClick={() => setIsFocused(true)}
         className={`select-none outline-none transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] touch-manipulation fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 origin-bottom-right ${
           isExpanded
-            ? "w-[calc(100vw-24px)] xs:w-[380px] sm:w-[500px] md:w-[560px] max-w-[560px] max-h-[calc(100dvh-24px)] sm:max-h-[min(92vh,800px)] flex flex-col justify-end"
-            : "w-[215px] sm:w-[225px]"
+            ? "w-[calc(100vw-24px)] xs:w-[380px] sm:w-[500px] md:w-[540px] max-w-[540px] max-h-[calc(100dvh-24px)] sm:max-h-[min(94vh,860px)] flex flex-col justify-end"
+            : "w-[245px] sm:w-[260px]"
         } ${isRubberAnimating ? "animate-rubber-elastic" : ""}`}
         data-byte-run="true"
-        aria-label="Byte Run mini arcade game widget"
+        aria-label="Pac-Man arcade mini game"
       >
         <div
           className={`bg-white dark:bg-[#16171d] rounded-2xl border-3 transition-all duration-500 ${
@@ -1219,11 +1115,11 @@ export const ByteRun: React.FC = () => {
               : "border-slate-900 dark:border-white shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#ffffff]"
           }`}
         >
-          {/* Header Bar */}
+          {/* Streamlined Header Bar - No Cluttered ML Toggles */}
           <div className="flex items-center justify-between border-b border-slate-900/80 dark:border-slate-800 pb-1.5 mb-1.5 font-mono-code text-[11px] gap-1">
             <div className="flex items-center gap-1.5 font-black uppercase tracking-wider text-slate-900 dark:text-white shrink-0">
               <span
-                className={`w-2 h-2 rounded-full border border-slate-900 dark:border-white shrink-0 ${
+                className={`w-2.5 h-2.5 rounded-full border border-slate-900 dark:border-white shrink-0 ${
                   gameState === "PLAYING"
                     ? isOverclocked
                       ? "bg-indigo-500 animate-ping"
@@ -1235,92 +1131,17 @@ export const ByteRun: React.FC = () => {
                     : "bg-yellow-400"
                 }`}
               />
-              <span className="text-[10px] sm:text-[11px]">BYTE RUN</span>
+              <span className="text-[11px] sm:text-xs font-black tracking-wide">PAC-MAN</span>
               {isOverclocked && (
-                <span className="text-[7.5px] sm:text-[8px] bg-indigo-600 text-white px-1 py-0.2 rounded font-bold animate-pulse">⚡LR-BOOST</span>
+                <span className="text-[8px] bg-indigo-600 text-white px-1.5 py-0.2 rounded font-black animate-pulse">
+                  ⚡ POWERED
+                </span>
               )}
             </div>
 
-            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-              {/* Only show advanced AI and Auto buttons in expanded mode so compact mode never overflows */}
-              {isExpanded && (
-                <>
-                  {/* Auto / Manual Resize Mode Toggle */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setAutoResize((prev) => !prev);
-                      triggerHaptic(8);
-                      containerRef.current?.focus();
-                    }}
-                    aria-label={`Current resize mode: ${autoResize ? "AUTO" : "MANUAL"}. Tap to toggle.`}
-                    title={
-                      autoResize
-                        ? "Mode: AUTO (Auto-expands on play, auto-minimizes 5s after game). Tap for Manual."
-                        : "Mode: MANUAL (Resize only via manual buttons). Tap for Auto."
-                    }
-                    className={`px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-mono-code font-black border flex items-center gap-0.5 transition-all active:scale-95 cursor-pointer touch-manipulation ${
-                      autoResize
-                        ? "bg-amber-50 dark:bg-amber-950/70 border-amber-500 text-amber-700 dark:text-amber-300"
-                        : "bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-500"
-                    }`}
-                  >
-                    <span>{autoResize ? "AUTO" : "MANUAL"}</span>
-                  </button>
-
-                  {/* AI Policy Mode Toggle (Neural / Overfit / Heuristic) */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      cycleAiMode();
-                      triggerHaptic(10);
-                      containerRef.current?.focus();
-                    }}
-                    aria-label={`Current AI mode: ${aiMode}. Tap to cycle.`}
-                    title={`AI Policy: ${aiMode} (Tap to cycle Neural / Overfit / Heuristic)`}
-                    className={`px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-mono-code font-black border flex items-center gap-0.5 transition-all active:scale-95 cursor-pointer touch-manipulation ${
-                      aiMode === "NEURAL"
-                        ? "bg-indigo-50 dark:bg-indigo-950/70 border-indigo-500 text-indigo-700 dark:text-indigo-300"
-                        : aiMode === "OVERFIT"
-                        ? "bg-rose-50 dark:bg-rose-950/70 border-rose-500 text-rose-700 dark:text-rose-300"
-                        : "bg-emerald-50 dark:bg-emerald-950/70 border-emerald-500 text-emerald-700 dark:text-emerald-300"
-                    }`}
-                  >
-                    <Brain className="w-2.5 h-2.5 inline" />
-                    <span>{aiMode}</span>
-                  </button>
-                </>
-              )}
-
-              {/* Ghost Count Toggle: 1 to 4 Authentic Pac-Man Ghosts */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setGhostCount((prev) => (prev >= 4 ? 1 : prev + 1));
-                  triggerHaptic(10);
-                  containerRef.current?.focus();
-                }}
-                aria-label={`Ghosts active: ${ghostCount}. Tap to cycle 1-4.`}
-                title={
-                  ghostCount === 1
-                    ? "1 Ghost: Blinky (Direct Chase)"
-                    : ghostCount === 2
-                    ? "2 Ghosts: Blinky (Chase) & Inky (Intercept)"
-                    : ghostCount === 3
-                    ? "3 Ghosts: Blinky (Chase), Inky (Intercept), Pinky (Ambush)"
-                    : "4 Ghosts: All 4 Pac-Man Ghosts (Blinky, Inky, Pinky, Clyde)"
-                }
-                className="px-1 py-0.5 rounded text-[8.5px] font-mono-code font-bold border transition-colors touch-manipulation cursor-pointer bg-amber-100 dark:bg-amber-950/60 border-amber-500 text-amber-700 dark:text-amber-300"
-              >
-                <span className="flex items-center gap-0.5">
-                  {ghostCount === 1 ? <User className="w-2.5 h-2.5" /> : <Users className="w-2.5 h-2.5" />} {ghostCount}
-                </span>
-              </button>
-
-              {/* Toggle Expand / Normal Size (Manual Option) */}
+            {/* Quick Sizing Controls */}
+            <div className="flex items-center gap-1 shrink-0">
+              {/* Toggle Expand / Normal Size */}
               <button
                 type="button"
                 onClick={(e) => {
@@ -1341,10 +1162,10 @@ export const ByteRun: React.FC = () => {
                 title={isExpanded ? "Collapse size (Esc)" : "Expand into large screen"}
                 className="p-1 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-90 transition-all touch-manipulation cursor-pointer"
               >
-                {isExpanded ? <Minimize2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <Maximize2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
+                {isExpanded ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
               </button>
 
-              {/* Minimize to dock pill (Manual Option) */}
+              {/* Minimize to dock pill */}
               <button
                 type="button"
                 onClick={(e) => {
@@ -1356,33 +1177,25 @@ export const ByteRun: React.FC = () => {
                 title="Minimize to floating pill"
                 className="p-1 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-90 transition-all touch-manipulation cursor-pointer"
               >
-                <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                <Minus className="w-3 h-3" />
               </button>
             </div>
           </div>
 
-          {/* AI Telemetry & Score Strip */}
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-1 mb-1.5 px-0.5 text-[8.5px] font-mono-code font-bold text-slate-500 dark:text-slate-400 relative">
+          {/* Clean Score & High Score Strip */}
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-1 mb-1.5 px-0.5 text-[9px] sm:text-[10px] font-mono-code font-bold text-slate-600 dark:text-slate-400 relative">
             <div className="flex items-center gap-1 text-slate-900 dark:text-white">
               <span>SCORE:</span>
-              <span className="text-amber-500 dark:text-yellow-400 font-extrabold text-[9.5px]">
-                {score.toString().padStart(3, "0")}
+              <span className="text-amber-500 dark:text-yellow-400 font-extrabold text-[10px] sm:text-[11px]">
+                {score.toString().padStart(4, "0")}
               </span>
-              {highScore > 0 && (
-                <span className="flex items-center text-amber-600 dark:text-amber-400 text-[8px]" title={`Best: ${highScore}`}>
-                  <Trophy className="w-2.5 h-2.5 inline" />
-                </span>
-              )}
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-0.5">
-                <Activity className="w-2.5 h-2.5 text-indigo-500 inline" />
-                <span>LOSS:</span>
-                <span className="text-indigo-650 dark:text-indigo-300 font-extrabold">{lossDisplay}</span>
-              </span>
-              <span>
-                SPD:<span className="text-emerald-600 dark:text-emerald-400 font-bold ml-0.5">{currentGhostSpeed}ms</span>
+            <div className="flex items-center gap-1 text-slate-700 dark:text-slate-300">
+              <Trophy className="w-3 h-3 text-amber-500 inline" />
+              <span>HIGH:</span>
+              <span className="text-slate-900 dark:text-white font-extrabold">
+                {highScore.toString().padStart(4, "0")}
               </span>
             </div>
 
@@ -1394,7 +1207,7 @@ export const ByteRun: React.FC = () => {
             )}
           </div>
 
-          {/* 9x9 Maze Viewport with touchAction: none for smooth gesture scrolling */}
+          {/* 15x15 Maze Viewport with Wrap Tunnels */}
           <div
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
@@ -1408,17 +1221,22 @@ export const ByteRun: React.FC = () => {
             style={{ touchAction: "none" }}
             className={`relative mx-auto bg-slate-50 dark:bg-[#0c0d11] rounded-xl border-2 border-slate-900 dark:border-slate-700 overflow-hidden cursor-pointer transition-all duration-500 ease-out select-none ${
               isExpanded
-                ? "w-full max-w-[320px] xs:max-w-[360px] sm:max-w-[420px] md:max-w-[460px] aspect-square"
-                : "w-[168px] h-[168px]"
+                ? "w-full max-w-[340px] xs:max-w-[380px] sm:max-w-[440px] md:max-w-[480px] aspect-square"
+                : "w-[200px] h-[200px] sm:w-[215px] sm:h-[215px]"
             }`}
           >
-            <svg viewBox="0 0 180 180" className="w-full h-full block">
-              {/* Walls & Collectible Bytes */}
+            <svg viewBox="0 0 240 240" className="w-full h-full block">
+              {/* Warp Tunnel Indicators on Row 7 */}
+              <text x="3" y="125" fontSize="7" fill="#64748b" fontFamily="monospace" fontWeight="bold">◀</text>
+              <text x="230" y="125" fontSize="7" fill="#64748b" fontFamily="monospace" fontWeight="bold">▶</text>
+
+              {/* Walls & Collectible Dots */}
               {maze.map((row, r) =>
                 row.map((cell, c) => {
                   const x = c * CELL_SIZE;
                   const y = r * CELL_SIZE;
 
+                  // Wall
                   if (cell === 1) {
                     return (
                       <rect
@@ -1427,43 +1245,43 @@ export const ByteRun: React.FC = () => {
                         y={y + 1}
                         width={CELL_SIZE - 2}
                         height={CELL_SIZE - 2}
-                        rx="3.5"
-                        className="fill-slate-200 dark:fill-slate-800 stroke-slate-350 dark:stroke-slate-700"
-                        strokeWidth="1"
+                        rx="2.5"
+                        className="fill-slate-200 dark:fill-slate-800 stroke-slate-300 dark:stroke-slate-700"
+                        strokeWidth="0.8"
                       />
                     );
                   }
 
-                  // Normal Byte (+10)
+                  // Normal Pac-Dot (+10)
                   if (cell === 0) {
                     return (
                       <rect
                         key={`dot-${r}-${c}`}
-                        x={x + CELL_SIZE / 2 - 1.5}
-                        y={y + CELL_SIZE / 2 - 1.5}
-                        width="3"
-                        height="3"
-                        rx="0.6"
-                        className="fill-amber-500 dark:fill-yellow-400 opacity-80"
+                        x={x + CELL_SIZE / 2 - 1.1}
+                        y={y + CELL_SIZE / 2 - 1.1}
+                        width="2.2"
+                        height="2.2"
+                        rx="0.5"
+                        className="fill-amber-500 dark:fill-yellow-400 opacity-85"
                       />
                     );
                   }
 
-                  // Special Power-up Byte (+50)
+                  // Power Pellet (+50)
                   if (cell === 3) {
                     return (
                       <g key={`power-${r}-${c}`}>
                         <circle
                           cx={x + CELL_SIZE / 2}
                           cy={y + CELL_SIZE / 2}
-                          r="4.5"
+                          r="3.8"
                           className="fill-cyan-400 dark:fill-cyan-300 animate-pulse stroke-slate-900 dark:stroke-slate-950"
                           strokeWidth="0.8"
                         />
                         <circle
                           cx={x + CELL_SIZE / 2}
                           cy={y + CELL_SIZE / 2}
-                          r="6.5"
+                          r="5.5"
                           fill="none"
                           stroke="#06b6d4"
                           strokeWidth="0.6"
@@ -1479,47 +1297,47 @@ export const ByteRun: React.FC = () => {
                 })
               )}
 
-              {/* Player: Minimalist Pac-Man */}
+              {/* Player: Pac-Man */}
               <g
                 style={{
-                  transform: `translate(${player.c * CELL_SIZE + 10}px, ${player.r * CELL_SIZE + 10}px)`,
-                  transition: gameState === "PLAYING" ? "transform 0.19s cubic-bezier(0.25, 0.1, 0.25, 1)" : "none",
+                  transform: `translate(${player.c * CELL_SIZE + 8}px, ${player.r * CELL_SIZE + 8}px)`,
+                  transition: gameState === "PLAYING" ? "transform 0.17s cubic-bezier(0.25, 0.1, 0.25, 1)" : "none",
                 }}
               >
                 <g
                   style={{
                     transform: `rotate(${getPlayerRotation()}deg)`,
-                    transition: "transform 0.15s ease-out",
+                    transition: "transform 0.14s ease-out",
                   }}
                 >
                   {mouthOpen && direction ? (
                     <path
-                      d="M 0 0 L 7 -4 A 8 8 0 1 0 7 4 Z"
+                      d="M 0 0 L 5.5 -3.2 A 6.5 6.5 0 1 0 5.5 3.2 Z"
                       className="fill-yellow-400 dark:fill-yellow-300 stroke-slate-900 dark:stroke-slate-950"
-                      strokeWidth="1"
+                      strokeWidth="0.9"
                     />
                   ) : (
                     <circle
-                      r="8"
+                      r="6.5"
                       cx="0"
                       cy="0"
                       className="fill-yellow-400 dark:fill-yellow-300 stroke-slate-900 dark:stroke-slate-950"
-                      strokeWidth="1"
+                      strokeWidth="0.9"
                     />
                   )}
-                  {/* Pacman Eye */}
-                  <circle cx="1" cy="-4" r="1.1" fill="#0f172a" />
+                  {/* Eye */}
+                  <circle cx="1" cy="-3.2" r="0.9" fill="#0f172a" />
                 </g>
 
-                {/* Spawn Protection Ring */}
+                {/* Spawn Shield Indicator */}
                 {isProtected && gameState === "PLAYING" && (
                   <circle
-                    r="10.5"
+                    r="9"
                     cx="0"
                     cy="0"
                     fill="none"
                     stroke="#38bdf8"
-                    strokeWidth="1.2"
+                    strokeWidth="1.1"
                     strokeDasharray="2 2"
                     className="animate-spin"
                   />
@@ -1535,48 +1353,42 @@ export const ByteRun: React.FC = () => {
                 isPlaying={gameState === "PLAYING"}
               />
 
-              {/* 2. Inky (Cyan) – Intercept (active when ghostCount >= 2) */}
-              {ghostCount >= 2 && (
-                <GhostSvg
-                  pos={inky}
-                  dir={inkyDir}
-                  color="#06b6d4"
-                  isOverclocked={isOverclocked}
-                  isPlaying={gameState === "PLAYING"}
-                />
-              )}
+              {/* 2. Pinky (Pink) – Ambush */}
+              <GhostSvg
+                pos={pinky}
+                dir={pinkyDir}
+                color="#ec4899"
+                isOverclocked={isOverclocked}
+                isPlaying={gameState === "PLAYING"}
+              />
 
-              {/* 3. Pinky (Pink) – Ambush (active when ghostCount >= 3) */}
-              {ghostCount >= 3 && (
-                <GhostSvg
-                  pos={pinky}
-                  dir={pinkyDir}
-                  color="#ec4899"
-                  isOverclocked={isOverclocked}
-                  isPlaying={gameState === "PLAYING"}
-                />
-              )}
+              {/* 3. Inky (Cyan) – Vector Intercept */}
+              <GhostSvg
+                pos={inky}
+                dir={inkyDir}
+                color="#06b6d4"
+                isOverclocked={isOverclocked}
+                isPlaying={gameState === "PLAYING"}
+              />
 
-              {/* 4. Clyde (Orange) – Chase and Retreat (active when ghostCount >= 4) */}
-              {ghostCount >= 4 && (
-                <GhostSvg
-                  pos={clyde}
-                  dir={clydeDir}
-                  color="#f97316"
-                  isOverclocked={isOverclocked}
-                  isPlaying={gameState === "PLAYING"}
-                />
-              )}
+              {/* 4. Clyde (Orange) – Chase and Retreat */}
+              <GhostSvg
+                pos={clyde}
+                dir={clydeDir}
+                color="#f97316"
+                isOverclocked={isOverclocked}
+                isPlaying={gameState === "PLAYING"}
+              />
             </svg>
 
             {/* Victory Overlay */}
             {gameState === "WON" && (
               <div className="absolute inset-0 bg-emerald-600/95 flex flex-col items-center justify-center p-3 text-center text-white backdrop-blur-[1px] animate-in fade-in duration-200 z-20">
-                <span className={`font-black uppercase font-mono-code tracking-wider ${isExpanded ? "text-xs sm:text-sm" : "text-[10px]"}`}>
-                  Model Converged.
+                <span className={`font-black uppercase font-mono-code tracking-wider ${isExpanded ? "text-sm sm:text-base" : "text-xs"}`}>
+                  STAGE CLEARED!
                 </span>
-                <span className={`font-mono-code mt-0.5 opacity-90 ${isExpanded ? "text-[11px] sm:text-xs" : "text-[9px]"}`}>
-                  Score: {score} (+100) • Loss: 0.00
+                <span className={`font-mono-code mt-0.5 opacity-90 ${isExpanded ? "text-xs sm:text-sm" : "text-[10px]"}`}>
+                  Final Score: {score}
                 </span>
                 <button
                   type="button"
@@ -1601,7 +1413,6 @@ export const ByteRun: React.FC = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         setAutoMinimizeCountdown(null);
-                        setAutoResize(false);
                       }}
                       className="font-mono-code text-[8.5px] font-bold uppercase text-yellow-300 hover:underline ml-1 cursor-pointer"
                     >
@@ -1615,11 +1426,11 @@ export const ByteRun: React.FC = () => {
             {/* Game Over Overlay */}
             {gameState === "LOST" && (
               <div className="absolute inset-0 bg-slate-900/90 dark:bg-black/95 flex flex-col items-center justify-center p-3 text-center text-white backdrop-blur-[1px] animate-in fade-in duration-200 z-20">
-                <span className={`font-black uppercase font-mono-code text-red-400 tracking-wider ${isExpanded ? "text-xs sm:text-sm" : "text-[10px]"}`}>
-                  Caught by a Bug.
+                <span className={`font-black uppercase font-mono-code text-red-400 tracking-wider ${isExpanded ? "text-sm sm:text-base" : "text-xs"}`}>
+                  GAME OVER
                 </span>
-                <span className={`font-mono-code mt-0.5 text-slate-300 ${isExpanded ? "text-[11px] sm:text-xs" : "text-[9px]"}`}>
-                  Final Score: {score} • Loss: {lossDisplay}
+                <span className={`font-mono-code mt-0.5 text-slate-300 ${isExpanded ? "text-xs sm:text-sm" : "text-[10px]"}`}>
+                  Final Score: {score}
                 </span>
                 <button
                   type="button"
@@ -1644,7 +1455,6 @@ export const ByteRun: React.FC = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         setAutoMinimizeCountdown(null);
-                        setAutoResize(false);
                       }}
                       className="font-mono-code text-[8.5px] font-bold uppercase text-yellow-400 hover:underline ml-1 cursor-pointer"
                     >
@@ -1683,13 +1493,13 @@ export const ByteRun: React.FC = () => {
                 <span className={`rounded font-mono-code font-bold bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-200 border border-slate-400 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] ${
                   isExpanded ? "px-3 py-1 text-[10px] sm:text-xs" : "px-1.5 py-0.5 text-[8px]"
                 }`}>
-                  Swipe, tap keys, or click to play
+                  Swipe or tap keys to move
                 </span>
               </div>
             )}
           </div>
 
-          {/* Footer: Large Thumb-friendly D-Pad on Mobile & Controls */}
+          {/* Footer Controls: D-Pad and Reset */}
           <div className={`flex items-center justify-between border-t border-slate-200 dark:border-slate-800 font-mono-code transition-all ${
             isExpanded ? "pt-2.5 mt-2.5 sm:pt-3 sm:mt-3 text-xs" : "pt-1.5 mt-2 text-[11px]"
           }`}>
@@ -1782,25 +1592,19 @@ export const ByteRun: React.FC = () => {
 
           {/* Pac-Man Ghost AI Strategy Legend (Expanded Mode) */}
           {isExpanded && (
-            <div className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 mt-2 pt-1.5 border-t border-slate-200 dark:border-slate-800 text-[8.5px] font-mono-code">
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-2 pt-1.5 border-t border-slate-200 dark:border-slate-800 text-[8.5px] font-mono-code">
               <span className="flex items-center gap-1 font-bold text-red-600 dark:text-red-400" title="Blinky: Direct Chase towards Pac-Man">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" /> Blinky: Chase
               </span>
-              {ghostCount >= 2 && (
-                <span className="flex items-center gap-1 font-bold text-cyan-600 dark:text-cyan-400" title="Inky: Vector Intercept from Blinky">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 inline-block" /> Inky: Intercept
-                </span>
-              )}
-              {ghostCount >= 3 && (
-                <span className="flex items-center gap-1 font-bold text-pink-600 dark:text-pink-400" title="Pinky: Ambush 3 tiles ahead">
-                  <span className="w-1.5 h-1.5 rounded-full bg-pink-500 inline-block" /> Pinky: Ambush
-                </span>
-              )}
-              {ghostCount >= 4 && (
-                <span className="flex items-center gap-1 font-bold text-orange-600 dark:text-orange-400" title="Clyde: Chase when far, retreat to corner when close">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block" /> Clyde: Retreat
-                </span>
-              )}
+              <span className="flex items-center gap-1 font-bold text-pink-600 dark:text-pink-400" title="Pinky: Ambush 3 tiles ahead">
+                <span className="w-1.5 h-1.5 rounded-full bg-pink-500 inline-block" /> Pinky: Ambush
+              </span>
+              <span className="flex items-center gap-1 font-bold text-cyan-600 dark:text-cyan-400" title="Inky: Vector Intercept from Blinky">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 inline-block" /> Inky: Intercept
+              </span>
+              <span className="flex items-center gap-1 font-bold text-orange-600 dark:text-orange-400" title="Clyde: Chase when far, retreat to corner when close">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block" /> Clyde: Retreat
+              </span>
             </div>
           )}
 
@@ -1808,7 +1612,7 @@ export const ByteRun: React.FC = () => {
           <div className={`font-mono-code text-center text-slate-400 dark:text-slate-500 uppercase tracking-tight ${
             isExpanded ? "text-[9px] mt-2" : "text-[8px] mt-1"
           }`}>
-            // AUTONOMOUS AGENT SIMULATION
+            // CLASSIC PAC-MAN ARCADE
           </div>
         </div>
       </div>
