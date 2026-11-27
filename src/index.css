@@ -209,33 +209,3 @@ body.dark {
   animation: rubber-elastic 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   transform-origin: bottom right;
 }
-
-/* Very fast glitch reveal effect */
-@keyframes glitch-flicker {
-  0% {
-    opacity: 0.9;
-    transform: translate(0, 0);
-  }
-  25% {
-    opacity: 1;
-    transform: translate(-1px, 0.5px);
-  }
-  50% {
-    opacity: 0.95;
-    transform: translate(1px, -0.5px);
-  }
-  75% {
-    opacity: 1;
-    transform: translate(-0.5px, 0);
-  }
-  100% {
-    opacity: 1;
-    transform: translate(0, 0);
-  }
-}
-
-.glitch-active {
-  display: inline-block;
-  animation: glitch-flicker 0.14s ease-out infinite;
-  text-shadow: 1px 0 0 rgba(6, 182, 212, 0.5), -1px 0 0 rgba(244, 63, 94, 0.5);
-}

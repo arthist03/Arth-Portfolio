@@ -17,60 +17,6 @@ import {
 } from "lucide-react";
 import ArthPP from '/Icon/pp.jpg';
 
-const FastGlitchText: React.FC<{
-  text: string;
-  className?: string;
-  style?: React.CSSProperties;
-}> = ({ text, className = "", style = {} }) => {
-  const [displayed, setDisplayed] = useState(text);
-  const [isGlitching, setIsGlitching] = useState(true);
-
-  useEffect(() => {
-    const chars = "01XZ_#@&%<>[]/*ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const textLen = text.length;
-    let frameId: number;
-    let start: number | null = null;
-    const duration = 280; // 280ms: very fast glitch reveal
-
-    const tick = (now: number) => {
-      if (!start) start = now;
-      const elapsed = now - start;
-      const progress = Math.min(1, elapsed / duration);
-      const resolvedCount = Math.floor(progress * textLen);
-
-      let result = "";
-      for (let i = 0; i < textLen; i++) {
-        const targetChar = text[i];
-        if (targetChar === " " || targetChar === "&" || targetChar === "\n") {
-          result += targetChar;
-        } else if (i < resolvedCount) {
-          result += targetChar;
-        } else {
-          result += chars[Math.floor(Math.random() * chars.length)];
-        }
-      }
-
-      setDisplayed(result);
-
-      if (progress < 1) {
-        frameId = requestAnimationFrame(tick);
-      } else {
-        setDisplayed(text);
-        setIsGlitching(false);
-      }
-    };
-
-    frameId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frameId);
-  }, [text]);
-
-  return (
-    <span className={`${className} ${isGlitching ? "glitch-active" : ""}`} style={style}>
-      {displayed}
-    </span>
-  );
-};
-
 function App() {
   const { scrollYProgress } = useScroll();
   const [activeFilter, setActiveFilter] = useState("ALL");
@@ -84,24 +30,32 @@ function App() {
         {/* Bento Dashboard Container */}
         <main className="max-w-6xl mx-auto px-4 pt-28 pb-16">
           
-          {/* Header Area: Professional Editorial Visual System */}
-          <header className="mb-8 sm:mb-12 max-w-[680px]">
+          {/* Header Area: Professional Editorial Visual System with Smooth Graceful Reveal */}
+          <motion.header 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            className="mb-8 sm:mb-12 max-w-[680px]"
+          >
             {/* Canonical Heading 1 with Left-to-Right Neutral Gradient */}
             <h1 
               className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight leading-[1.08] sm:leading-[1.06] bg-gradient-to-r from-[#000000] to-[#666666] dark:from-[#FFFFFF] dark:to-[#9B9B9B] bg-clip-text text-transparent"
               style={{ textWrap: "balance" }}
             >
-              <FastGlitchText text="Machine Learning & Biomedical Engineering" />
+              Machine Learning &amp; Biomedical Engineering
             </h1>
 
-            {/* Sub-headline */}
-            <p
+            {/* Sub-headline with Staggered Graceful Reveal */}
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
               className="text-base sm:text-lg text-slate-600 dark:text-[#9B9B9B] font-normal leading-relaxed mt-3 sm:mt-4 max-w-[620px]"
               style={{ textWrap: "pretty" }}
             >
               Building intelligent diagnostic algorithms, computer vision pipelines, and surgical robotics hardware for clinical healthcare.
-            </p>
-          </header>
+            </motion.p>
+          </motion.header>
 
           {/* Grid Layout (5 Rows total on Desktop) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 auto-rows-auto md:auto-rows-[225px]">
@@ -128,7 +82,7 @@ function App() {
                 {/* Title */}
                 <div>
                   <h2 className="text-2xl sm:text-3xl font-display font-black tracking-tight text-slate-900 dark:text-white uppercase">
-                    <FastGlitchText text="Arth Kadiya" />
+                    Arth Kadiya
                   </h2>
                   <p className="text-xs sm:text-sm font-mono-code font-bold uppercase text-indigo-650 dark:text-indigo-400 mt-1">
                     AI/ML & Biomedical Engineer
