@@ -2,7 +2,6 @@ import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Send, Github, Linkedin, Mail, Loader2 } from "lucide-react";
 import emailjs from "@emailjs/browser";
-import { useTheme } from "./ThemeContext";
 
 const Contact = () => {
   const formRef = useRef<HTMLFormElement>(null);
@@ -11,8 +10,6 @@ const Contact = () => {
     type: "success" | "error" | null;
     message: string;
   }>({ type: null, message: "" });
-
-  const { theme } = useTheme();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +31,7 @@ const Contact = () => {
         message: "Message sent successfully! I'll get back to you soon.",
       });
       formRef.current.reset();
-    } catch (error) {
+    } catch {
       setSubmitStatus({
         type: "error",
         message: "Failed to send the message. Please try again later.",
@@ -46,16 +43,16 @@ const Contact = () => {
 
   return (
     <section
-      className="py-24 bg-[#fbfaf5] dark:bg-[#0d0e12] border-t-3 border-slate-900 dark:border-slate-800 transition-colors duration-500"
+      className="py-24 bg-[#fbfaf5] dark:bg-[#181818] border-t-[3px] border-slate-900 dark:border-neutral-800 transition-colors duration-300"
       id="contact"
     >
       <div className="max-w-5xl mx-auto px-4">
         
         <div className="text-center mb-16">
-          <span className="text-xs font-mono-code font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+          <span className="text-xs font-mono-code font-bold uppercase tracking-widest text-slate-500 dark:text-neutral-400">
             [CONTACT]
           </span>
-          <h2 className="text-4xl font-display font-black text-slate-900 dark:text-white uppercase mt-2">
+          <h2 className="text-3xl sm:text-4xl font-display font-bold text-slate-900 dark:text-white uppercase mt-2">
             Let's Connect
           </h2>
           <div className="w-16 h-1.5 bg-slate-900 dark:bg-white mx-auto mt-4" />
@@ -66,13 +63,14 @@ const Contact = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="lg:col-span-2 space-y-6"
           >
-            <h3 className="text-2xl font-display font-black text-slate-900 dark:text-white uppercase">
+            <h3 className="text-2xl font-display font-bold text-slate-900 dark:text-white uppercase">
               Get in Touch
             </h3>
-            <p className="text-slate-800 dark:text-gray-250 text-sm font-semibold leading-relaxed">
+            <p className="text-slate-700 dark:text-neutral-300 text-sm font-medium leading-relaxed">
               Open to discussions regarding clinical engineering, research collaborations, medical device development, or technical roles. Send a message below or connect directly via email and LinkedIn.
             </p>
             
@@ -114,8 +112,9 @@ const Contact = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="neobrutal-card p-5 sm:p-8 bg-white dark:bg-[#16171d] lg:col-span-3 w-full"
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="neobrutal-card p-5 sm:p-8 bg-white dark:bg-[#1f1f1f] lg:col-span-3 w-full"
           >
             <form
               ref={formRef}

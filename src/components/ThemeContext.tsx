@@ -1,42 +1,59 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
-type Theme = 'light';
+type Theme = 'light' | 'dark';
 
 interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
+  setTheme: (next: Theme) => void;
   isTransitioning: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+function getInitialTheme(): Theme {
+  if (typeof window === 'undefined') return 'light';
+  const stored = window.localStorage.getItem('theme');
+  if (stored === 'dark' || stored === 'light') return stored;
+  return 'light';
+}
+
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const theme: Theme = 'light';
-  const isTransitioning = false;
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     const root = window.document.documentElement;
     const body = window.document.body;
-    
-    // Remove dark class explicitly, add light
-    root.classList.remove('dark');
-    body.classList.remove('dark');
-    root.classList.add('light');
-    body.classList.add('light');
-    
-    // Force light Neo-brutalist palette colors on body
-    body.style.backgroundColor = '#fbfaf5'; // Sand/Vanilla
-    body.style.color = '#0f172a'; // Slate-905
-    
-    localStorage.setItem('theme', 'light');
+
+    root.classList.toggle('dark', theme === 'dark');
+    body.classList.toggle('dark', theme === 'dark');
+    root.classList.toggle('light', theme === 'light');
+    body.classList.toggle('light', theme === 'light');
+
+    body.style.backgroundColor = theme === 'dark' ? '#181818' : '#fbfaf5';
+    body.style.color = theme === 'dark' ? '#f3f4f6' : '#0f172a';
+
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) {
+      metaTheme.setAttribute('content', theme === 'dark' ? '#181818' : '#fbfaf5');
+    }
+
+    window.localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const setTheme = useCallback((next: Theme) => {
+    setIsTransitioning(true);
+    setThemeState(next);
+    window.setTimeout(() => setIsTransitioning(false), 250);
   }, []);
 
   const toggleTheme = useCallback(() => {
-    // Locked to light mode: no action
-  }, []);
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  }, [theme, setTheme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, isTransitioning }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme, isTransitioning }}>
       {children}
     </ThemeContext.Provider>
   );

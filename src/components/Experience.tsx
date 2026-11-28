@@ -49,47 +49,48 @@ const Experience = () => {
 
   return (
     <section
-      className="py-24 bg-[#fbfaf5] dark:bg-[#0d0e12] border-t-3 border-slate-900 dark:border-slate-800 transition-colors duration-500"
+      className="py-24 bg-[#fbfaf5] dark:bg-[#181818] border-t-[3px] border-slate-900 dark:border-neutral-800 transition-colors duration-300"
       id="experience"
     >
       <div className="max-w-4xl mx-auto px-4">
         
         <div className="text-center mb-16">
-          <span className="text-xs font-mono-code font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+          <span className="text-xs font-mono-code font-bold uppercase tracking-widest text-slate-500 dark:text-neutral-400">
             [WORK]
           </span>
-          <h2 className="text-4xl font-display font-black text-slate-900 dark:text-white uppercase mt-2">
+          <h2 className="text-3xl sm:text-4xl font-display font-bold text-slate-900 dark:text-white uppercase mt-2">
             Professional Experience
           </h2>
           <div className="w-16 h-1.5 bg-slate-900 dark:bg-white mx-auto mt-4" />
         </div>
 
         {/* Timeline Container */}
-        <div className="relative border-l-3 border-slate-900 dark:border-white ml-2.5 sm:ml-8 pl-4 sm:pl-10 space-y-10 sm:space-y-12">
+        <div className="relative border-l-[3px] border-slate-900 dark:border-neutral-400 ml-2.5 sm:ml-8 pl-4 sm:pl-10 space-y-10 sm:space-y-12">
           
           {experiences.map((exp, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.05, duration: 0.4 }}
+              viewport={{ once: true, amount: 0.15 }}
+              transition={{ delay: index * 0.05, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
               className="relative group"
             >
               {/* Timeline dot/badge node */}
               <div 
-                className="absolute -left-[33px] sm:-left-[58px] top-5 sm:top-6 w-6 h-6 sm:w-8 sm:h-8 rounded-lg border-2 border-slate-900 dark:border-white bg-yellow-250 dark:bg-yellow-400 text-slate-900 flex items-center justify-center font-mono-code font-bold text-xs sm:text-sm shadow-[1.5px_1.5px_0px_0px_#0f172a] dark:shadow-[1.5px_1.5px_0px_0px_#ffffff] shrink-0"
+                className="absolute -left-[33px] sm:-left-[58px] top-5 sm:top-6 w-6 h-6 sm:w-8 sm:h-8 rounded-lg border-2 border-slate-900 dark:border-neutral-300 bg-amber-200 dark:bg-amber-400 text-slate-900 flex items-center justify-center font-mono-code font-bold text-xs sm:text-sm shadow-[1.5px_1.5px_0px_0px_#0f172a] shrink-0"
               >
                 0{index + 1}
               </div>
 
               {/* Stark card container */}
               <div
-                className="neobrutal-card p-4 sm:p-8 bg-white dark:bg-[#16171d]"
+                className="neobrutal-card p-4 sm:p-8 bg-white dark:bg-[#1f1f1f]"
               >
                 <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
                   {/* Briefcase Icon Container */}
                   <div
-                    className="p-3.5 rounded-lg border-2 border-slate-900 dark:border-white bg-indigo-100 dark:bg-indigo-400 text-slate-900 shrink-0"
+                    className="p-3.5 rounded-lg border-2 border-slate-900 dark:border-neutral-300 bg-indigo-100 dark:bg-indigo-400 text-slate-900 shrink-0"
                   >
                     <Briefcase className="w-6 h-6" />
                   </div>
@@ -97,21 +98,21 @@ const Experience = () => {
                   <div className="flex-1 w-full">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                       <div>
-                        <h3 className="text-xl font-display font-black text-slate-900 dark:text-white uppercase leading-snug">
+                        <h3 className="text-xl font-display font-bold text-slate-900 dark:text-white uppercase leading-snug">
                           {exp.title}
                         </h3>
-                        <p className="text-indigo-650 dark:text-indigo-400 font-bold text-sm mt-0.5">
+                        <p className="text-indigo-700 dark:text-indigo-400 font-bold text-sm mt-0.5">
                           {exp.company}
                         </p>
                       </div>
                       
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 border-2 border-slate-900 dark:border-white bg-slate-50 dark:bg-gray-900 text-xs font-mono-code font-bold uppercase text-slate-900 dark:text-white shadow-[1.5px_1.5px_0px_0px_#0f172a] dark:shadow-[1.5px_1.5px_0px_0px_#ffffff] shrink-0">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 border-2 border-slate-900 dark:border-neutral-400 bg-slate-50 dark:bg-[#272727] text-xs font-mono-code font-bold uppercase text-slate-900 dark:text-white shadow-[1.5px_1.5px_0px_0px_#0f172a] shrink-0">
                         <Calendar className="w-3.5 h-3.5 mr-0.5 shrink-0" />
                         <span>{exp.period}</span>
                       </div>
                     </div>
 
-                    <p className="text-slate-750 dark:text-gray-250 text-sm font-semibold leading-relaxed mb-5">
+                    <p className="text-slate-700 dark:text-neutral-300 text-sm font-medium leading-relaxed mb-5">
                       {exp.description}
                     </p>
 
@@ -120,7 +121,7 @@ const Experience = () => {
                       {exp.technologies.map((tech) => (
                         <span
                           key={tech}
-                          className="px-3 py-1 rounded-md text-[10px] font-mono-code font-bold border-2 border-slate-900 dark:border-white bg-white dark:bg-gray-800 text-slate-900 dark:text-white shadow-[1.5px_1.5px_0px_0px_#0f172a] dark:shadow-[1.5px_1.5px_0px_0px_#ffffff]"
+                          className="px-3 py-1 rounded-md text-[10px] font-mono-code font-bold border-2 border-slate-900 dark:border-neutral-500 bg-white dark:bg-[#272727] text-slate-900 dark:text-white shadow-[1.5px_1.5px_0px_0px_#0f172a]"
                         >
                           {tech}
                         </span>

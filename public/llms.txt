@@ -1,0 +1,32 @@
+# Arth Kadiya — AI/ML & Biomedical Engineer
+
+> Portfolio and engineering profile for Arth Kadiya, working at the intersection of machine learning, computer vision, surgical robotics, and biomedical engineering.
+
+- Website: https://arthkadiya.me/
+- Email: arthpk09@gmail.com
+- GitHub: https://github.com/arthist03
+- LinkedIn: https://linkedin.com/in/arthkadiya
+
+## Summary
+Arth Kadiya is pursuing a joint Masters in Medical Technologies at IIT Jodhpur and AIIMS Jodhpur (2025–2027), building diagnostic algorithms, medical computer vision pipelines, and clinical hardware systems.
+
+## Education
+- **Masters in Medical Technologies** — Indian Institute of Technology Jodhpur & AIIMS Jodhpur (2025–2027)
+- **B.Tech in Biomedical Engineering** — Manipal Institute of Technology, Manipal (2022–2025)
+- **Diploma in Biomedical Engineering** — Ganpat University, Mehsana (2019–2022)
+
+## Experience
+- **AI/ML Engineering Intern** — Sudhir Srivastava Innovations Pvt. Ltd. (March 2025 – July 2025): Computer vision and deep learning models for medical robotics tracking and simulation environments (Python, PyTorch, Unity, Vuforia).
+- **Full Stack Web Developer** — IEEE Bombay (September 2023 – October 2023): Front-end architecture and responsive UI modules for Developerstar.com (Svelte, JavaScript, HTML5, CSS3).
+- **Biomedical Engineering Intern** — Wockhardt Hospitals Ltd, Rajkot (June 2023 – July 2023): Preventive maintenance, calibration, and troubleshooting on critical care clinical equipment.
+- **Biomedical Engineering Intern** — Zydus Hospitals, Ahmedabad (April 2022 – July 2022): Diagnostic device performance verification and clinical safety testing.
+
+## Selected Projects
+- **Preterm Pregnancy Risk Prediction**: Clinical risk classifier evaluating maternal physiological parameters with Random Forest and SVM classifiers (Python, Scikit-learn).
+- **Real-Time Hand Gesture Classification**: Touchless vision pipeline combining MediaPipe hand landmarks, OpenCV, and a CNN classifier.
+- **AI-Assisted Ophthalmic Care App**: Android app in Kotlin and Firebase running TensorFlow Lite on-device retinal image screening (`https://github.com/arthist03/Eye-Care-For-You`).
+- **Customer Churn Prediction Network**: TensorFlow deep neural network for customer retention modeling (`https://github.com/arthist03/Predict-Customer-Churn`).
+- **Magic ML Model Visualization**: Interactive Python dashboard for visualizing decision surfaces and training metrics (`https://github.com/arthist03/Magic-ML`).
+
+## Core Technical Stack
+Python, PyTorch, TensorFlow, TensorFlow Lite, OpenCV, MediaPipe, Unity & Vuforia, Kotlin, Firebase, React, Vite, Tailwind CSS.

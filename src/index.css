@@ -1,16 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;750&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --font-display: 'Manrope', 'Plus Jakarta Sans', sans-serif;
-  --font-sans: 'Manrope', 'Plus Jakarta Sans', sans-serif;
-  --font-mono: 'Geist Mono', 'Fira Code', monospace;
+  --font-display: 'Manrope', sans-serif;
+  --font-sans: 'Manrope', sans-serif;
+  --font-mono: 'Geist Mono', monospace;
 }
 
 html {
@@ -21,14 +18,14 @@ html {
 body {
   margin: 0;
   overflow-x: hidden;
-  background-color: #fbfaf5; /* Clean Neo-brutalist Sand/Vanilla */
+  background-color: #fbfaf5;
   color: #0f172a;
-  transition: background-color 0.4s ease, color 0.4s ease;
+  transition: background-color 0.3s cubic-bezier(0.22, 1, 0.36, 1), color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   -webkit-font-smoothing: antialiased;
 }
 
 body.dark {
-  background-color: #0d0e12; /* Deep solid black */
+  background-color: #181818;
   color: #f3f4f6;
 }
 
@@ -54,48 +51,48 @@ body.dark {
   }
 }
 
-/* Monospace helpers */
 .font-mono-code {
   font-family: var(--font-mono);
 }
 
+.font-display {
+  font-family: var(--font-display);
+}
+
 /* Scrollbars */
 ::-webkit-scrollbar {
-  width: 12px;
+  width: 10px;
 }
 ::-webkit-scrollbar-track {
   background: #fbfaf5;
-  border-left: 3px solid #0f172a;
+  border-left: 2px solid #0f172a;
 }
 .dark ::-webkit-scrollbar-track {
-  background: #0d0e12;
-  border-left: 3px solid #ffffff;
+  background: #181818;
+  border-left: 2px solid #313131;
 }
 ::-webkit-scrollbar-thumb {
   background: #0f172a;
-  border: 1px solid #fbfaf5;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #ffffff;
-  border: 1px solid #0d0e12;
+  background: #9b9b9b;
 }
 
-/* Neo-Brutalist Cards */
+/* Neo-Brutalist Cards: GPU transform-only transitions for low-end smoothness */
 .neobrutal-card {
   background-color: #ffffff;
   border: 3px solid #0f172a;
   box-shadow: 6px 6px 0px 0px #0f172a;
   border-radius: 16px;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.3s ease;
 }
 
 .dark .neobrutal-card {
-  background-color: #16171d;
-  border: 3px solid #ffffff;
-  box-shadow: 6px 6px 0px 0px #ffffff;
+  background-color: #1f1f1f;
+  border: 3px solid #e5e7eb;
+  box-shadow: 6px 6px 0px 0px #000000;
 }
 
-/* Hover effect: only on devices that support hover */
 @media (hover: hover) {
   .neobrutal-card:hover {
     transform: translate(-3px, -3px);
@@ -103,7 +100,7 @@ body.dark {
   }
 
   .dark .neobrutal-card:hover {
-    box-shadow: 9px 9px 0px 0px #ffffff;
+    box-shadow: 9px 9px 0px 0px #000000;
   }
 
   .neobrutal-btn:hover {
@@ -112,76 +109,40 @@ body.dark {
   }
 
   .dark .neobrutal-btn:hover {
-    box-shadow: 6px 6px 0px 0px #ffffff;
+    box-shadow: 6px 6px 0px 0px #000000;
   }
 }
 
 .neobrutal-btn:active {
-  transform: translate(2px, 2px);
+  transform: scale(0.98) translateY(1px);
   box-shadow: 2px 2px 0px 0px #0f172a;
 }
 
 .dark .neobrutal-btn:active {
-  box-shadow: 2px 2px 0px 0px #ffffff;
+  box-shadow: 2px 2px 0px 0px #000000;
 }
 
-/* Custom Grid overlay helper */
+/* Subtle engineering grid overlay */
 .neo-grid-overlay {
   background-size: 32px 32px;
-  background-image: 
-    linear-gradient(to right, rgba(15, 23, 42, 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 23, 42, 0.07) 1px, transparent 1px);
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
 }
 
 .dark .neo-grid-overlay {
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
 }
 
-/* Custom typing effect with flat styling */
-.typing-effect {
-  display: inline-block;
-  overflow: hidden;
-  border-right: 3px solid #0f172a;
-  white-space: nowrap;
-  animation: typing 2.5s steps(30) 1s forwards, 
-             blink 1s step-end infinite 3.5s;
-  width: 0;
-}
-
-.dark .typing-effect {
-  border-right: 3px solid #ffffff;
-}
-
-@keyframes typing {
-  from { width: 0; }
-  to { width: 100%; }
-}
-
-@keyframes blink {
-  0%, 50% { border-color: inherit; }
-  51%, 100% { border-color: transparent; }
-}
-
-/* Spin Animations */
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-.animate-spin-slow {
-  animation: spin-slow 25s linear infinite;
-}
-
-/* Heading Display Utility */
-.font-display {
-  font-family: var(--font-display);
-}
-
-/* Custom Text Stroke Utilities for outline graphics */
-.stroke-text-yellow {
-  -webkit-text-stroke: 2px #eab308; /* yellow-500 */
-}
-.stroke-text-white {
-  -webkit-text-stroke: 2px #ffffff;
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
