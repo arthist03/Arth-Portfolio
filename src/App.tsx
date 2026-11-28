@@ -8,7 +8,6 @@ import Navbar from "./components/Navbar";
 import Hero3D from "./components/Hero3D";
 import CursorEffect from "./components/CursorEffect";
 import { ThemeProvider } from "./components/ThemeContext";
-import ByteRun from "./components/ByteRun";
 import { 
   Brain, Cpu, Network, Zap, Database, 
   Github, Linkedin, Mail, ArrowUpRight, 
@@ -312,9 +311,6 @@ function App() {
 
         {/* Contact Form */}
         <Contact />
-
-        {/* Floating Mini Arcade Game Widget */}
-        <ByteRun />
 
         {/* Global High-Priority Custom Cursor */}
         <CursorEffect />
